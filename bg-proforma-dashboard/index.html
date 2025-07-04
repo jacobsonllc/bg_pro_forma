@@ -541,14 +541,11 @@
         function updateDashboard() {
             if (!dashboardData) return;
 
-            console.log('Updating dashboard with scenario:', selectedScenario);
-            
             try {
                 updateMetrics();
                 updateCharts();
                 updateSummaryTable();
                 updateCompanyName();
-                console.log('Dashboard updated successfully');
             } catch (error) {
                 console.error('Error updating dashboard:', error);
                 showError('Error updating dashboard: ' + error.message);
@@ -574,27 +571,23 @@
         function getPeriodSummary(scenario) {
             const summaries = dashboardData.periodSummaries || [];
             
-            if (summaries.length > 0) {
-                const trailing12M = summaries.find(s => 
-                    s.period === 'Trailing 12M' && s.scenario === scenario
-                ) || {};
-                
-                const year1 = summaries.find(s => 
-                    s.period === 'Year 1' && s.scenario === scenario
-                ) || {};
-                
-                const year2 = summaries.find(s => 
-                    s.period === 'Year 2' && s.scenario === scenario
-                ) || {};
-                
-                const year3 = summaries.find(s => 
-                    s.period === 'Year 3' && s.scenario === scenario
-                ) || {};
-                
-                return { trailing12M, year1, year2, year3 };
-            }
+            const trailing12M = summaries.find(s => 
+                s.period === 'Trailing 12M' && s.scenario === scenario
+            ) || {};
             
-            return { trailing12M: {}, year1: {}, year2: {}, year3: {} };
+            const year1 = summaries.find(s => 
+                s.period === 'Year 1' && s.scenario === scenario
+            ) || {};
+            
+            const year2 = summaries.find(s => 
+                s.period === 'Year 2' && s.scenario === scenario
+            ) || {};
+            
+            const year3 = summaries.find(s => 
+                s.period === 'Year 3' && s.scenario === scenario
+            ) || {};
+            
+            return { trailing12M, year1, year2, year3 };
         }
 
         function updateCharts() {
@@ -602,7 +595,6 @@
                 updateRevenueChart();
                 updateProfitChart();
             } else {
-                console.log('Chart.js not loaded yet, retrying...');
                 setTimeout(updateCharts, 100);
             }
         }
@@ -787,13 +779,9 @@
         }
 
         function updateCompanyName() {
-            try {
-                const companyName = dashboardData.businessAssumptions?.operatorName || 'The Brothers that Just do Gutters';
-                const displayName = companyName === 'No report submitted' ? 'The Brothers that Just do Gutters' : companyName;
-                document.getElementById('company-name').textContent = `${displayName} - Financial Forecasting`;
-            } catch (error) {
-                console.error('Error updating company name:', error);
-            }
+            const companyName = dashboardData.businessAssumptions?.operatorName || 'The Brothers that Just do Gutters';
+            const displayName = companyName === 'No report submitted' ? 'The Brothers that Just do Gutters' : companyName;
+            document.getElementById('company-name').textContent = `${displayName} - Financial Forecasting`;
         }
 
         function getActualHistory() {
