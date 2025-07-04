@@ -48,6 +48,37 @@
             color: #6b7280;
         }
         
+        .data-freshness {
+            margin-top: 0.5rem;
+            font-size: 0.875rem;
+            color: #6b7280;
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .data-source-badge {
+            background: #10b981;
+            color: white;
+            padding: 0.25rem 0.75rem;
+            border-radius: 1rem;
+            font-size: 0.75rem;
+            font-weight: 500;
+        }
+
+        .data-source-badge.automated {
+            background: #3b82f6;
+        }
+
+        .data-source-badge.stale {
+            background: #f59e0b;
+        }
+
+        .data-source-badge.error {
+            background: #ef4444;
+        }
+        
         .upload-btn {
             background: #3b82f6;
             color: white;
@@ -306,6 +337,12 @@
             .scenario-buttons {
                 flex-direction: column;
             }
+            
+            .data-freshness {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 0.5rem;
+            }
         }
     </style>
 </head>
@@ -316,6 +353,10 @@
                 <div class="header-info">
                     <h1>Pro Forma Financial Dashboard</h1>
                     <p id="company-name">The Brothers that Just do Gutters - Financial Forecasting</p>
+                    <div class="data-freshness">
+                        <span id="last-updated">Data loaded: <span id="timestamp-display">Never</span></span>
+                        <span id="data-source" class="data-source-badge">Manual Upload</span>
+                    </div>
                 </div>
                 <button class="upload-btn" onclick="document.getElementById('fileInput').click()">
                     📁 Upload New Data
@@ -458,6 +499,7 @@
             try {
                 sessionStorage.setItem('proforma_data', JSON.stringify(data));
                 sessionStorage.setItem('proforma_timestamp', Date.now().toString());
+                updateDataFreshness();
             } catch (error) {
                 console.error('Error storing data:', error);
             }
@@ -507,6 +549,54 @@
                 } catch (error) {
                     console.error('Error processing webhook data:', error);
                 }
+            }
+        }
+
+        // Data freshness display function
+        function updateDataFreshness() {
+            const timestamp = sessionStorage.getItem('proforma_timestamp');
+            const timestampDisplay = document.getElementById('timestamp-display');
+            const dataSourceBadge = document.getElementById('data-source');
+            
+            if (timestamp) {
+                const date = new Date(parseInt(timestamp));
+                const now = new Date();
+                const hoursAgo = Math.floor((now - date) / (1000 * 60 * 60));
+                const minutesAgo = Math.floor((now - date) / (1000 * 60));
+                
+                // Format the timestamp
+                let displayText;
+                if (minutesAgo < 1) {
+                    displayText = 'Just now';
+                } else if (minutesAgo < 60) {
+                    displayText = `${minutesAgo} minutes ago`;
+                } else if (hoursAgo < 24) {
+                    displayText = `${hoursAgo} hours ago`;
+                } else {
+                    displayText = date.toLocaleDateString() + ' at ' + date.toLocaleTimeString();
+                }
+                
+                timestampDisplay.textContent = displayText;
+                
+                // Update data source badge
+                const urlParams = new URLSearchParams(window.location.search);
+                if (urlParams.get('data')) {
+                    dataSourceBadge.textContent = 'N8N Automated';
+                    dataSourceBadge.className = 'data-source-badge automated';
+                } else {
+                    dataSourceBadge.textContent = 'Manual Upload';
+                    dataSourceBadge.className = 'data-source-badge';
+                }
+                
+                // Add staleness indicator
+                if (hoursAgo > 24) {
+                    dataSourceBadge.classList.add('stale');
+                    dataSourceBadge.textContent += ' (Stale)';
+                }
+            } else {
+                timestampDisplay.textContent = 'Never';
+                dataSourceBadge.textContent = 'No Data';
+                dataSourceBadge.className = 'data-source-badge error';
             }
         }
 
@@ -618,6 +708,7 @@
                 updateCharts();
                 updateSummaryTable();
                 updateCompanyName();
+                updateDataFreshness();
                 console.log('Dashboard updated successfully');
             } catch (error) {
                 console.error('Error updating dashboard:', error);
