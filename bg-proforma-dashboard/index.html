@@ -439,6 +439,77 @@
         let revenueChart = null;
         let profitChart = null;
 
+        // Auto-load data on page load if available
+        window.addEventListener('load', () => {
+            checkForWebhookData();
+            const storedData = getStoredData();
+            if (storedData) {
+                console.log('Loading previously stored data...');
+                dashboardData = storedData;
+                showDashboard();
+                setTimeout(() => {
+                    updateDashboard();
+                }, 200);
+            }
+        });
+
+        // Store data in sessionStorage
+        function storeData(data) {
+            try {
+                sessionStorage.setItem('proforma_data', JSON.stringify(data));
+                sessionStorage.setItem('proforma_timestamp', Date.now().toString());
+            } catch (error) {
+                console.error('Error storing data:', error);
+            }
+        }
+
+        // Get stored data
+        function getStoredData() {
+            try {
+                const storedData = sessionStorage.getItem('proforma_data');
+                if (storedData) {
+                    return JSON.parse(storedData);
+                }
+            } catch (error) {
+                console.error('Error retrieving stored data:', error);
+            }
+            return null;
+        }
+
+        // Check for webhook data via URL parameters
+        function checkForWebhookData() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const webhookData = urlParams.get('data');
+            
+            if (webhookData) {
+                try {
+                    const decodedData = JSON.parse(decodeURIComponent(webhookData));
+                    console.log('Received webhook data from N8N');
+                    
+                    let processedData;
+                    if (Array.isArray(decodedData) && decodedData.length > 0) {
+                        processedData = decodedData[0];
+                    } else {
+                        processedData = decodedData;
+                    }
+                    
+                    if (processedData.monthlyData && processedData.periodSummaries) {
+                        storeData(processedData);
+                        dashboardData = processedData;
+                        showDashboard();
+                        setTimeout(() => {
+                            updateDashboard();
+                        }, 200);
+                        
+                        // Clear URL parameters
+                        window.history.replaceState({}, document.title, window.location.pathname);
+                    }
+                } catch (error) {
+                    console.error('Error processing webhook data:', error);
+                }
+            }
+        }
+
         function handleFileUpload(event) {
             const file = event.target.files[0];
             if (!file) return;
@@ -488,6 +559,7 @@
                     throw new Error('Invalid data structure. Missing monthlyData or periodSummaries.');
                 }
                 
+                storeData(processedData);
                 dashboardData = processedData;
                 hideLoading();
                 showDashboard();
@@ -546,6 +618,7 @@
                 updateCharts();
                 updateSummaryTable();
                 updateCompanyName();
+                console.log('Dashboard updated successfully');
             } catch (error) {
                 console.error('Error updating dashboard:', error);
                 showError('Error updating dashboard: ' + error.message);
