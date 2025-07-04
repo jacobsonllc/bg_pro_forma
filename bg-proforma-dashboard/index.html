@@ -583,21 +583,76 @@
         function getPeriodSummary(scenario) {
             const summaries = dashboardData.periodSummaries || [];
             
-            const trailing12M = summaries.find(s => 
-                s.period === 'Trailing 12M' && s.scenario === scenario
-            ) || {};
+            // If we have periodSummaries, use them
+            if (summaries.length > 0) {
+                const trailing12M = summaries.find(s => 
+                    s.period === 'Trailing 12M' && s.scenario === scenario
+                ) || {};
+                
+                const year1 = summaries.find(s => 
+                    s.period === 'Year 1' && s.scenario === scenario
+                ) || {};
+                
+                const year2 = summaries.find(s => 
+                    s.period === 'Year 2' && s.scenario === scenario
+                ) || {};
+                
+                const year3 = summaries.find(s => 
+                    s.period === 'Year 3' && s.scenario === scenario
+                ) || {};
+                
+                return { trailing12M, year1, year2, year3 };
+            }
             
-            const year1 = summaries.find(s => 
-                s.period === 'Year 1' && s.scenario === scenario
-            ) || {};
+            // Otherwise, calculate from monthlyData
+            const actualData = getActualHistory();
+            const forecastData = getScenarioForecast(scenario);
             
-            const year2 = summaries.find(s => 
-                s.period === 'Year 2' && s.scenario === scenario
-            ) || {};
+            // Calculate trailing 12M from actual data
+            const trailing12M = {
+                revenue: actualData.reduce((sum, m) => sum + (m.revenue || 0), 0),
+                materials: actualData.reduce((sum, m) => sum + (m.materials || 0), 0),
+                directLabor: actualData.reduce((sum, m) => sum + (m.directLabor || 0), 0),
+                grossProfit: actualData.reduce((sum, m) => sum + (m.grossProfit || 0), 0),
+                opex: actualData.reduce((sum, m) => sum + (m.opex || 0), 0),
+                netProfit: actualData.reduce((sum, m) => sum + (m.netProfit || 0), 0),
+                operatingCF: actualData.reduce((sum, m) => sum + (m.operatingCF || 0), 0)
+            };
             
-            const year3 = summaries.find(s => 
-                s.period === 'Year 3' && s.scenario === scenario
-            ) || {};
+            // Calculate Year 1-3 from forecast data
+            const year1Data = forecastData.slice(0, 12);
+            const year2Data = forecastData.slice(12, 24);
+            const year3Data = forecastData.slice(24, 36);
+            
+            const year1 = {
+                revenue: year1Data.reduce((sum, m) => sum + (m.revenue || 0), 0),
+                materials: year1Data.reduce((sum, m) => sum + (m.materials || 0), 0),
+                directLabor: year1Data.reduce((sum, m) => sum + (m.directLabor || 0), 0),
+                grossProfit: year1Data.reduce((sum, m) => sum + (m.grossProfit || 0), 0),
+                opex: year1Data.reduce((sum, m) => sum + (m.opex || 0), 0),
+                netProfit: year1Data.reduce((sum, m) => sum + (m.netProfit || 0), 0),
+                operatingCF: year1Data.reduce((sum, m) => sum + (m.operatingCF || 0), 0)
+            };
+            
+            const year2 = {
+                revenue: year2Data.reduce((sum, m) => sum + (m.revenue || 0), 0),
+                materials: year2Data.reduce((sum, m) => sum + (m.materials || 0), 0),
+                directLabor: year2Data.reduce((sum, m) => sum + (m.directLabor || 0), 0),
+                grossProfit: year2Data.reduce((sum, m) => sum + (m.grossProfit || 0), 0),
+                opex: year2Data.reduce((sum, m) => sum + (m.opex || 0), 0),
+                netProfit: year2Data.reduce((sum, m) => sum + (m.netProfit || 0), 0),
+                operatingCF: year2Data.reduce((sum, m) => sum + (m.operatingCF || 0), 0)
+            };
+            
+            const year3 = {
+                revenue: year3Data.reduce((sum, m) => sum + (m.revenue || 0), 0),
+                materials: year3Data.reduce((sum, m) => sum + (m.materials || 0), 0),
+                directLabor: year3Data.reduce((sum, m) => sum + (m.directLabor || 0), 0),
+                grossProfit: year3Data.reduce((sum, m) => sum + (m.grossProfit || 0), 0),
+                opex: year3Data.reduce((sum, m) => sum + (m.opex || 0), 0),
+                netProfit: year3Data.reduce((sum, m) => sum + (m.netProfit || 0), 0),
+                operatingCF: year3Data.reduce((sum, m) => sum + (m.operatingCF || 0), 0)
+            };
             
             return { trailing12M, year1, year2, year3 };
         }
