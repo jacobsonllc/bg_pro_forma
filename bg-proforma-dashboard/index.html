@@ -480,9 +480,12 @@
         let revenueChart = null;
         let profitChart = null;
 
-        // Auto-load data on page load if available
+        // Auto-load data on page load
         window.addEventListener('load', () => {
+            // First check for webhook data
             checkForWebhookData();
+            
+            // Then check for stored data
             const storedData = getStoredData();
             if (storedData) {
                 console.log('Loading previously stored data...');
@@ -494,11 +497,11 @@
             }
         });
 
-        // Store data in sessionStorage
+        // Store data in localStorage (persistent)
         function storeData(data) {
             try {
-                sessionStorage.setItem('proforma_data', JSON.stringify(data));
-                sessionStorage.setItem('proforma_timestamp', Date.now().toString());
+                localStorage.setItem('proforma_data', JSON.stringify(data));
+                localStorage.setItem('proforma_timestamp', Date.now().toString());
                 updateDataFreshness();
             } catch (error) {
                 console.error('Error storing data:', error);
@@ -508,7 +511,7 @@
         // Get stored data
         function getStoredData() {
             try {
-                const storedData = sessionStorage.getItem('proforma_data');
+                const storedData = localStorage.getItem('proforma_data');
                 if (storedData) {
                     return JSON.parse(storedData);
                 }
@@ -543,7 +546,7 @@
                             updateDashboard();
                         }, 200);
                         
-                        // Clear URL parameters
+                        // Clear URL parameters and redirect to clean URL
                         window.history.replaceState({}, document.title, window.location.pathname);
                     }
                 } catch (error) {
@@ -554,7 +557,7 @@
 
         // Data freshness display function
         function updateDataFreshness() {
-            const timestamp = sessionStorage.getItem('proforma_timestamp');
+            const timestamp = localStorage.getItem('proforma_timestamp');
             const timestampDisplay = document.getElementById('timestamp-display');
             const dataSourceBadge = document.getElementById('data-source');
             
@@ -579,8 +582,8 @@
                 timestampDisplay.textContent = displayText;
                 
                 // Update data source badge
-                const urlParams = new URLSearchParams(window.location.search);
-                if (urlParams.get('data')) {
+                const isAutomated = dashboardData?.dataSource?.includes('automated');
+                if (isAutomated) {
                     dataSourceBadge.textContent = 'N8N Automated';
                     dataSourceBadge.className = 'data-source-badge automated';
                 } else {
