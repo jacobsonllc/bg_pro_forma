@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Pro Forma Financial Dashboard</title>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
     <style>
         * {
             margin: 0;
@@ -310,7 +310,6 @@
     </style>
 </head>
 <body>
-    <!-- Header -->
     <div class="header">
         <div class="container">
             <div class="header-content">
@@ -326,10 +325,8 @@
         </div>
     </div>
 
-    <!-- Main Content -->
     <div class="main-content">
         <div class="container">
-            <!-- Upload Area (shown when no data) -->
             <div id="uploadArea" class="upload-area">
                 <h2>Upload Your Pro Forma Data</h2>
                 <p>Drag and drop your JSON file here, or click the button below to browse</p>
@@ -338,18 +335,14 @@
                 </button>
             </div>
 
-            <!-- Loading State -->
             <div id="loadingState" class="loading hidden">
                 <div class="spinner"></div>
                 <p>Processing your data...</p>
             </div>
 
-            <!-- Error Message -->
             <div id="errorMessage" class="error-message hidden"></div>
 
-            <!-- Dashboard Content (hidden until data loaded) -->
             <div id="dashboardContent" class="hidden">
-                <!-- Scenario Selector -->
                 <div class="scenario-selector">
                     <h3>Scenario Analysis</h3>
                     <div class="scenario-buttons">
@@ -359,7 +352,6 @@
                     </div>
                 </div>
 
-                <!-- Key Metrics -->
                 <div class="metrics-grid">
                     <div class="metric-card">
                         <div class="metric-header">
@@ -405,7 +397,6 @@
                     </div>
                 </div>
 
-                <!-- Charts -->
                 <div class="charts-grid">
                     <div class="chart-card">
                         <h3>Revenue Trend - <span id="chartScenario">Base Case</span> <small>(Actual + Forecast)</small></h3>
@@ -422,7 +413,6 @@
                     </div>
                 </div>
 
-                <!-- Summary Table -->
                 <div class="summary-table">
                     <h3>Financial Summary by Period</h3>
                     <table id="summaryTable">
@@ -436,7 +426,6 @@
                             </tr>
                         </thead>
                         <tbody>
-                            <!-- Table content will be populated by JavaScript -->
                         </tbody>
                     </table>
                 </div>
@@ -445,21 +434,17 @@
     </div>
 
     <script>
-        // Global variables
         let dashboardData = null;
         let selectedScenario = 'Base Case';
         let revenueChart = null;
         let profitChart = null;
 
-        // File upload handling
         function handleFileUpload(event) {
             const file = event.target.files[0];
             if (!file) return;
-            
             processFile(file);
         }
 
-        // Drag and drop handling
         const uploadArea = document.getElementById('uploadArea');
         
         uploadArea.addEventListener('dragover', (e) => {
@@ -474,14 +459,12 @@
         uploadArea.addEventListener('drop', (e) => {
             e.preventDefault();
             uploadArea.classList.remove('dragover');
-            
             const files = e.dataTransfer.files;
             if (files.length > 0) {
                 processFile(files[0]);
             }
         });
 
-        // Process uploaded file
         async function processFile(file) {
             if (!file.name.endsWith('.json')) {
                 showError('Please upload a JSON file.');
@@ -494,15 +477,13 @@
                 const text = await file.text();
                 const jsonData = JSON.parse(text);
                 
-                // Handle both direct JSON and array format from N8N
                 let processedData;
                 if (Array.isArray(jsonData) && jsonData.length > 0) {
-                    processedData = jsonData[0]; // N8N wraps data in array
+                    processedData = jsonData[0];
                 } else {
                     processedData = jsonData;
                 }
                 
-                // Validate required data structure
                 if (!processedData.monthlyData || !processedData.periodSummaries) {
                     throw new Error('Invalid data structure. Missing monthlyData or periodSummaries.');
                 }
@@ -511,10 +492,9 @@
                 hideLoading();
                 showDashboard();
                 
-                // Add small delay to ensure DOM is ready
                 setTimeout(() => {
                     updateDashboard();
-                }, 100);
+                }, 200);
                 
             } catch (error) {
                 hideLoading();
@@ -523,7 +503,6 @@
             }
         }
 
-        // UI state management
         function showLoading() {
             document.getElementById('uploadArea').classList.add('hidden');
             document.getElementById('dashboardContent').classList.add('hidden');
@@ -547,7 +526,6 @@
             document.getElementById('dashboardContent').classList.remove('hidden');
         }
 
-        // Scenario selection
         document.addEventListener('DOMContentLoaded', () => {
             const scenarioButtons = document.querySelectorAll('.scenario-btn');
             scenarioButtons.forEach(btn => {
@@ -560,12 +538,8 @@
             });
         });
 
-        // Update dashboard with current data and scenario
         function updateDashboard() {
-            if (!dashboardData) {
-                console.error('No dashboard data available');
-                return;
-            }
+            if (!dashboardData) return;
 
             console.log('Updating dashboard with scenario:', selectedScenario);
             
@@ -581,7 +555,6 @@
             }
         }
 
-        // Update key metrics
         function updateMetrics() {
             const summary = getPeriodSummary(selectedScenario);
             
@@ -590,7 +563,6 @@
             document.getElementById('year1Profit').textContent = formatCurrency(summary.year1?.netProfit || 0);
             document.getElementById('year3Revenue').textContent = formatCurrency(summary.year3?.revenue || 0);
             
-            // Calculate growth rates
             const revenueGrowth = calculateGrowthRate(summary.trailing12M?.revenue, summary.year1?.revenue);
             const profitGrowth = calculateGrowthRate(summary.trailing12M?.netProfit, summary.year1?.netProfit);
             
@@ -599,11 +571,9 @@
             document.getElementById('chartScenario').textContent = selectedScenario;
         }
 
-        // Get period summary for scenario
         function getPeriodSummary(scenario) {
             const summaries = dashboardData.periodSummaries || [];
             
-            // If we have periodSummaries, use them
             if (summaries.length > 0) {
                 const trailing12M = summaries.find(s => 
                     s.period === 'Trailing 12M' && s.scenario === scenario
@@ -624,239 +594,148 @@
                 return { trailing12M, year1, year2, year3 };
             }
             
-            // Otherwise, calculate from monthlyData
-            const actualData = getActualHistory();
-            const forecastData = getScenarioForecast(scenario);
-            
-            // Calculate trailing 12M from actual data
-            const trailing12M = {
-                revenue: actualData.reduce((sum, m) => sum + (m.revenue || 0), 0),
-                materials: actualData.reduce((sum, m) => sum + (m.materials || 0), 0),
-                directLabor: actualData.reduce((sum, m) => sum + (m.directLabor || 0), 0),
-                grossProfit: actualData.reduce((sum, m) => sum + (m.grossProfit || 0), 0),
-                opex: actualData.reduce((sum, m) => sum + (m.opex || 0), 0),
-                netProfit: actualData.reduce((sum, m) => sum + (m.netProfit || 0), 0),
-                operatingCF: actualData.reduce((sum, m) => sum + (m.operatingCF || 0), 0)
-            };
-            
-            // Calculate Year 1-3 from forecast data
-            const year1Data = forecastData.slice(0, 12);
-            const year2Data = forecastData.slice(12, 24);
-            const year3Data = forecastData.slice(24, 36);
-            
-            const year1 = {
-                revenue: year1Data.reduce((sum, m) => sum + (m.revenue || 0), 0),
-                materials: year1Data.reduce((sum, m) => sum + (m.materials || 0), 0),
-                directLabor: year1Data.reduce((sum, m) => sum + (m.directLabor || 0), 0),
-                grossProfit: year1Data.reduce((sum, m) => sum + (m.grossProfit || 0), 0),
-                opex: year1Data.reduce((sum, m) => sum + (m.opex || 0), 0),
-                netProfit: year1Data.reduce((sum, m) => sum + (m.netProfit || 0), 0),
-                operatingCF: year1Data.reduce((sum, m) => sum + (m.operatingCF || 0), 0)
-            };
-            
-            const year2 = {
-                revenue: year2Data.reduce((sum, m) => sum + (m.revenue || 0), 0),
-                materials: year2Data.reduce((sum, m) => sum + (m.materials || 0), 0),
-                directLabor: year2Data.reduce((sum, m) => sum + (m.directLabor || 0), 0),
-                grossProfit: year2Data.reduce((sum, m) => sum + (m.grossProfit || 0), 0),
-                opex: year2Data.reduce((sum, m) => sum + (m.opex || 0), 0),
-                netProfit: year2Data.reduce((sum, m) => sum + (m.netProfit || 0), 0),
-                operatingCF: year2Data.reduce((sum, m) => sum + (m.operatingCF || 0), 0)
-            };
-            
-            const year3 = {
-                revenue: year3Data.reduce((sum, m) => sum + (m.revenue || 0), 0),
-                materials: year3Data.reduce((sum, m) => sum + (m.materials || 0), 0),
-                directLabor: year3Data.reduce((sum, m) => sum + (m.directLabor || 0), 0),
-                grossProfit: year3Data.reduce((sum, m) => sum + (m.grossProfit || 0), 0),
-                opex: year3Data.reduce((sum, m) => sum + (m.opex || 0), 0),
-                netProfit: year3Data.reduce((sum, m) => sum + (m.netProfit || 0), 0),
-                operatingCF: year3Data.reduce((sum, m) => sum + (m.operatingCF || 0), 0)
-            };
-            
-            return { trailing12M, year1, year2, year3 };
+            return { trailing12M: {}, year1: {}, year2: {}, year3: {} };
         }
 
-        // Update charts
         function updateCharts() {
-            updateRevenueChart();
-            updateProfitChart();
+            if (typeof Chart !== 'undefined') {
+                updateRevenueChart();
+                updateProfitChart();
+            } else {
+                console.log('Chart.js not loaded yet, retrying...');
+                setTimeout(updateCharts, 100);
+            }
         }
 
-        // Update revenue chart
         function updateRevenueChart() {
             const ctx = document.getElementById('revenueChart');
-            if (!ctx) {
-                console.error('Revenue chart canvas not found');
-                return;
-            }
+            if (!ctx) return;
             
-            const context = ctx.getContext('2d');
-            
-            // Get chart data
             const actualData = getActualHistory();
             const forecastData = getScenarioForecast(selectedScenario);
             const chartData = [...actualData, ...forecastData].slice(0, 36);
             
-            console.log('Chart data points:', chartData.length);
-            
-            // Destroy existing chart
             if (revenueChart) {
                 revenueChart.destroy();
             }
             
-            // Validate data
-            if (chartData.length === 0) {
-                console.error('No chart data available');
-                return;
-            }
-            
-            try {
-                // Create new chart
-                revenueChart = new Chart(context, {
-                    type: 'line',
-                    data: {
-                        labels: chartData.map(d => d.dateLabel || 'Unknown'),
-                        datasets: [{
-                            label: 'Revenue',
-                            data: chartData.map(d => d.revenue || 0),
-                            borderColor: '#3b82f6',
-                            backgroundColor: 'rgba(59, 130, 246, 0.1)',
-                            borderWidth: 3,
-                            pointBackgroundColor: chartData.map(d => d.period === 'Actual' ? '#dc2626' : '#3b82f6'),
-                            pointBorderColor: chartData.map(d => d.period === 'Actual' ? '#dc2626' : '#3b82f6'),
-                            pointRadius: 4,
-                            tension: 0.1
-                        }]
-                    },
-                    options: {
-                        responsive: true,
-                        maintainAspectRatio: false,
-                        plugins: {
-                            legend: {
-                                display: false
-                            },
-                            tooltip: {
-                                callbacks: {
-                                    label: function(context) {
-                                        return 'Revenue: ' + formatCurrency(context.raw);
-                                    }
+            revenueChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: chartData.map(d => d.dateLabel || 'Unknown'),
+                    datasets: [{
+                        label: 'Revenue',
+                        data: chartData.map(d => d.revenue || 0),
+                        borderColor: '#3b82f6',
+                        backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                        borderWidth: 3,
+                        pointBackgroundColor: chartData.map(d => d.period === 'Actual' ? '#dc2626' : '#3b82f6'),
+                        pointBorderColor: chartData.map(d => d.period === 'Actual' ? '#dc2626' : '#3b82f6'),
+                        pointRadius: 4,
+                        tension: 0.1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: false
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    return 'Revenue: ' + formatCurrency(context.raw);
                                 }
                             }
-                        },
-                        scales: {
-                            y: {
-                                beginAtZero: false,
-                                ticks: {
-                                    callback: function(value) {
-                                        return '$' + (value / 1000).toFixed(0) + 'K';
-                                    }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: false,
+                            ticks: {
+                                callback: function(value) {
+                                    return '$' + (value / 1000).toFixed(0) + 'K';
                                 }
                             }
                         }
                     }
-                });
-                
-                console.log('Revenue chart created successfully');
-            } catch (error) {
-                console.error('Error creating revenue chart:', error);
-            }
+                }
+            });
         }
 
-        // Update profit chart
         function updateProfitChart() {
             const ctx = document.getElementById('profitChart');
-            if (!ctx) {
-                console.error('Profit chart canvas not found');
-                return;
-            }
+            if (!ctx) return;
             
-            const context = ctx.getContext('2d');
-            
-            // Get chart data
             const actualData = getActualHistory();
             const forecastData = getScenarioForecast(selectedScenario);
             const chartData = [...actualData, ...forecastData].slice(0, 36);
             
-            // Destroy existing chart
             if (profitChart) {
                 profitChart.destroy();
             }
             
-            // Validate data
-            if (chartData.length === 0) {
-                console.error('No chart data available');
-                return;
-            }
-            
-            try {
-                // Create new chart
-                profitChart = new Chart(context, {
-                    type: 'line',
-                    data: {
-                        labels: chartData.map(d => d.dateLabel || 'Unknown'),
-                        datasets: [
-                            {
-                                label: 'Gross Profit',
-                                data: chartData.map(d => d.grossProfit || 0),
-                                borderColor: '#10b981',
-                                backgroundColor: 'rgba(16, 185, 129, 0.1)',
-                                borderWidth: 2,
-                                pointRadius: 0,
-                                tension: 0.1
-                            },
-                            {
-                                label: 'EBITDA',
-                                data: chartData.map(d => d.ebitda || 0),
-                                borderColor: '#f59e0b',
-                                backgroundColor: 'rgba(245, 158, 11, 0.1)',
-                                borderWidth: 2,
-                                pointRadius: 0,
-                                tension: 0.1
-                            },
-                            {
-                                label: 'Net Profit',
-                                data: chartData.map(d => d.netProfit || 0),
-                                borderColor: '#dc2626',
-                                backgroundColor: 'rgba(220, 38, 38, 0.1)',
-                                borderWidth: 2,
-                                pointRadius: 0,
-                                tension: 0.1
-                            }
-                        ]
-                    },
-                    options: {
-                        responsive: true,
-                        maintainAspectRatio: false,
-                        plugins: {
-                            tooltip: {
-                                callbacks: {
-                                    label: function(context) {
-                                        return context.dataset.label + ': ' + formatCurrency(context.raw);
-                                    }
+            profitChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: chartData.map(d => d.dateLabel || 'Unknown'),
+                    datasets: [
+                        {
+                            label: 'Gross Profit',
+                            data: chartData.map(d => d.grossProfit || 0),
+                            borderColor: '#10b981',
+                            backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                            borderWidth: 2,
+                            pointRadius: 0,
+                            tension: 0.1
+                        },
+                        {
+                            label: 'EBITDA',
+                            data: chartData.map(d => d.ebitda || 0),
+                            borderColor: '#f59e0b',
+                            backgroundColor: 'rgba(245, 158, 11, 0.1)',
+                            borderWidth: 2,
+                            pointRadius: 0,
+                            tension: 0.1
+                        },
+                        {
+                            label: 'Net Profit',
+                            data: chartData.map(d => d.netProfit || 0),
+                            borderColor: '#dc2626',
+                            backgroundColor: 'rgba(220, 38, 38, 0.1)',
+                            borderWidth: 2,
+                            pointRadius: 0,
+                            tension: 0.1
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    return context.dataset.label + ': ' + formatCurrency(context.raw);
                                 }
                             }
-                        },
-                        scales: {
-                            y: {
-                                beginAtZero: false,
-                                ticks: {
-                                    callback: function(value) {
-                                        return '$' + (value / 1000).toFixed(0) + 'K';
-                                    }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: false,
+                            ticks: {
+                                callback: function(value) {
+                                    return '$' + (value / 1000).toFixed(0) + 'K';
                                 }
                             }
                         }
                     }
-                });
-                
-                console.log('Profit chart created successfully');
-            } catch (error) {
-                console.error('Error creating profit chart:', error);
-            }
+                }
+            });
         }
 
-        // Update summary table
         function updateSummaryTable() {
             const summary = getPeriodSummary(selectedScenario);
             const tbody = document.querySelector('#summaryTable tbody');
@@ -907,7 +786,6 @@
             `;
         }
 
-        // Update company name
         function updateCompanyName() {
             try {
                 const companyName = dashboardData.businessAssumptions?.operatorName || 'The Brothers that Just do Gutters';
@@ -918,7 +796,6 @@
             }
         }
 
-        // Helper functions
         function getActualHistory() {
             return dashboardData.monthlyData?.filter(item => item.period === 'Actual') || [];
         }
