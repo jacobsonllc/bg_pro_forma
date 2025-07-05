@@ -168,49 +168,24 @@
     </div>
 
     <script>
-        let dashboardData = null;
-        let selectedScenario = 'Base Case';
-        let revenueChart = null;
-        let profitChart = null;
+        var dashboardData = null;
+        var selectedScenario = 'Base Case';
+        var revenueChart = null;
+        var profitChart = null;
 
         function updateDebugInfo(message) {
             document.getElementById('debugText').innerHTML = message;
         }
-
-        window.addEventListener('load', function() {
-            console.log('Dashboard loading...');
-            updateDebugInfo('Dashboard loading...');
-            
-            const urlParams = new URLSearchParams(window.location.search);
-            const webhookData = urlParams.get('data');
-            
-            console.log('URL has data parameter:', !!webhookData);
-            updateDebugInfo('URL Check: ' + (webhookData ? 'Data found (' + webhookData.length + ' chars)' : 'No data found'));
-            
-            if (webhookData) {
-                processWebhookData(webhookData);
-            } else {
-                const storedData = getStoredData();
-                if (storedData) {
-                    updateDebugInfo('Found stored data, loading dashboard...');
-                    dashboardData = storedData;
-                    showDashboard();
-                    updateDashboard();
-                } else {
-                    updateDebugInfo('No data found. Upload a file or run N8N workflow.');
-                }
-            }
-        });
 
         function processWebhookData(webhookData) {
             try {
                 updateDebugInfo('Decoding URL data...');
                 console.log('Decoding webhook data...');
                 
-                const decodedData = JSON.parse(decodeURIComponent(webhookData));
+                var decodedData = JSON.parse(decodeURIComponent(webhookData));
                 console.log('Successfully decoded webhook data');
                 
-                let processedData = Array.isArray(decodedData) ? decodedData[0] : decodedData;
+                var processedData = Array.isArray(decodedData) ? decodedData[0] : decodedData;
                 
                 if (processedData.monthlyData && processedData.periodSummaries) {
                     console.log('Valid data structure found');
@@ -244,7 +219,7 @@
 
         function getStoredData() {
             try {
-                const storedData = localStorage.getItem('proforma_data');
+                var storedData = localStorage.getItem('proforma_data');
                 return storedData ? JSON.parse(storedData) : null;
             } catch (error) {
                 console.error('Error retrieving stored data:', error);
@@ -253,21 +228,21 @@
         }
 
         function updateDataFreshness() {
-            const timestamp = localStorage.getItem('proforma_timestamp');
-            const timestampDisplay = document.getElementById('timestamp-display');
-            const dataSourceBadge = document.getElementById('data-source');
+            var timestamp = localStorage.getItem('proforma_timestamp');
+            var timestampDisplay = document.getElementById('timestamp-display');
+            var dataSourceBadge = document.getElementById('data-source');
             
             if (timestamp) {
-                const date = new Date(parseInt(timestamp));
-                const minutesAgo = Math.floor((Date.now() - date) / (1000 * 60));
+                var date = new Date(parseInt(timestamp));
+                var minutesAgo = Math.floor((Date.now() - date) / (1000 * 60));
                 
-                let displayText = minutesAgo < 1 ? 'Just now' : 
+                var displayText = minutesAgo < 1 ? 'Just now' : 
                                  minutesAgo < 60 ? minutesAgo + ' minutes ago' : 
                                  Math.floor(minutesAgo / 60) + ' hours ago';
                 
                 timestampDisplay.textContent = displayText;
                 
-                const isAutomated = dashboardData?.dataSource?.includes('automated');
+                var isAutomated = dashboardData && dashboardData.dataSource && dashboardData.dataSource.indexOf('automated') !== -1;
                 if (isAutomated) {
                     dataSourceBadge.textContent = 'N8N Automated';
                     dataSourceBadge.className = 'data-source-badge automated';
@@ -283,7 +258,7 @@
         }
 
         function handleFileUpload(event) {
-            const file = event.target.files[0];
+            var file = event.target.files[0];
             if (!file || !file.name.endsWith('.json')) {
                 showError('Please upload a JSON file.');
                 return;
@@ -291,23 +266,27 @@
             processFile(file);
         }
 
-        async function processFile(file) {
-            try {
-                const text = await file.text();
-                const jsonData = JSON.parse(text);
-                let processedData = Array.isArray(jsonData) ? jsonData[0] : jsonData;
-                
-                if (!processedData.monthlyData || !processedData.periodSummaries) {
-                    throw new Error('Invalid data structure. Missing monthlyData or periodSummaries.');
+        function processFile(file) {
+            var reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    var text = e.target.result;
+                    var jsonData = JSON.parse(text);
+                    var processedData = Array.isArray(jsonData) ? jsonData[0] : jsonData;
+                    
+                    if (!processedData.monthlyData || !processedData.periodSummaries) {
+                        throw new Error('Invalid data structure. Missing monthlyData or periodSummaries.');
+                    }
+                    
+                    storeData(processedData);
+                    dashboardData = processedData;
+                    showDashboard();
+                    updateDashboard();
+                } catch (error) {
+                    showError('Error reading file: ' + error.message);
                 }
-                
-                storeData(processedData);
-                dashboardData = processedData;
-                showDashboard();
-                updateDashboard();
-            } catch (error) {
-                showError('Error reading file: ' + error.message);
-            }
+            };
+            reader.readAsText(file);
         }
 
         function showError(message) {
@@ -321,18 +300,6 @@
             document.getElementById('debugInfo').classList.add('hidden');
             document.getElementById('dashboardContent').classList.remove('hidden');
         }
-
-        document.addEventListener('DOMContentLoaded', function() {
-            const scenarioButtons = document.querySelectorAll('.scenario-btn');
-            scenarioButtons.forEach(function(btn) {
-                btn.addEventListener('click', function() {
-                    scenarioButtons.forEach(function(b) { b.classList.remove('active'); });
-                    btn.classList.add('active');
-                    selectedScenario = btn.dataset.scenario;
-                    updateDashboard();
-                });
-            });
-        });
 
         function updateDashboard() {
             if (!dashboardData) return;
@@ -350,14 +317,14 @@
         }
 
         function updateMetrics() {
-            const summary = getPeriodSummary(selectedScenario);
-            document.getElementById('trailing12M').textContent = formatCurrency(summary.trailing12M?.revenue || 0);
-            document.getElementById('year1Revenue').textContent = formatCurrency(summary.year1?.revenue || 0);
-            document.getElementById('year1Profit').textContent = formatCurrency(summary.year1?.netProfit || 0);
-            document.getElementById('year3Revenue').textContent = formatCurrency(summary.year3?.revenue || 0);
+            var summary = getPeriodSummary(selectedScenario);
+            document.getElementById('trailing12M').textContent = formatCurrency(summary.trailing12M.revenue || 0);
+            document.getElementById('year1Revenue').textContent = formatCurrency(summary.year1.revenue || 0);
+            document.getElementById('year1Profit').textContent = formatCurrency(summary.year1.netProfit || 0);
+            document.getElementById('year3Revenue').textContent = formatCurrency(summary.year3.revenue || 0);
             
-            const revenueGrowth = calculateGrowthRate(summary.trailing12M?.revenue, summary.year1?.revenue);
-            const profitGrowth = calculateGrowthRate(summary.trailing12M?.netProfit, summary.year1?.netProfit);
+            var revenueGrowth = calculateGrowthRate(summary.trailing12M.revenue, summary.year1.revenue);
+            var profitGrowth = calculateGrowthRate(summary.trailing12M.netProfit, summary.year1.netProfit);
             
             document.getElementById('year1Growth').textContent = '+' + revenueGrowth + '% growth';
             document.getElementById('profitGrowth').textContent = '+' + profitGrowth + '% growth';
@@ -365,13 +332,24 @@
         }
 
         function getPeriodSummary(scenario) {
-            const summaries = dashboardData.periodSummaries || [];
-            return {
-                trailing12M: summaries.find(function(s) { return s.period === 'Trailing 12M' && s.scenario === scenario; }) || {},
-                year1: summaries.find(function(s) { return s.period === 'Year 1' && s.scenario === scenario; }) || {},
-                year2: summaries.find(function(s) { return s.period === 'Year 2' && s.scenario === scenario; }) || {},
-                year3: summaries.find(function(s) { return s.period === 'Year 3' && s.scenario === scenario; }) || {}
+            var summaries = dashboardData.periodSummaries || [];
+            var result = {
+                trailing12M: {},
+                year1: {},
+                year2: {},
+                year3: {}
             };
+            
+            for (var i = 0; i < summaries.length; i++) {
+                var s = summaries[i];
+                if (s.scenario === scenario) {
+                    if (s.period === 'Trailing 12M') result.trailing12M = s;
+                    if (s.period === 'Year 1') result.year1 = s;
+                    if (s.period === 'Year 2') result.year2 = s;
+                    if (s.period === 'Year 3') result.year3 = s;
+                }
+            }
+            return result;
         }
 
         function updateCharts() {
@@ -382,25 +360,50 @@
         }
 
         function updateRevenueChart() {
-            const ctx = document.getElementById('revenueChart');
+            var ctx = document.getElementById('revenueChart');
             if (!ctx) return;
             
-            const actualData = dashboardData.monthlyData?.filter(function(item) { return item.period === 'Actual'; }) || [];
-            const forecastData = dashboardData.monthlyData?.filter(function(item) { return item.period === 'Forecast' && item.scenario === selectedScenario; }) || [];
-            const chartData = actualData.concat(forecastData).slice(0, 36);
+            var actualData = [];
+            var forecastData = [];
+            
+            if (dashboardData.monthlyData) {
+                for (var i = 0; i < dashboardData.monthlyData.length; i++) {
+                    var item = dashboardData.monthlyData[i];
+                    if (item.period === 'Actual') {
+                        actualData.push(item);
+                    } else if (item.period === 'Forecast' && item.scenario === selectedScenario) {
+                        forecastData.push(item);
+                    }
+                }
+            }
+            
+            var chartData = actualData.concat(forecastData).slice(0, 48);
             
             if (revenueChart) revenueChart.destroy();
+            
+            var labels = [];
+            var data = [];
+            var pointColors = [];
+            
+            for (var i = 0; i < chartData.length; i++) {
+                var d = chartData[i];
+                labels.push(d.dateLabel || d.monthName || 'Unknown');
+                data.push(d.revenue || 0);
+                pointColors.push(d.period === 'Actual' ? '#dc2626' : '#3b82f6');
+            }
             
             revenueChart = new Chart(ctx, {
                 type: 'line',
                 data: {
-                    labels: chartData.map(function(d) { return d.dateLabel || 'Unknown'; }),
+                    labels: labels,
                     datasets: [{
                         label: 'Revenue',
-                        data: chartData.map(function(d) { return d.revenue || 0; }),
+                        data: data,
                         borderColor: '#3b82f6',
                         backgroundColor: 'rgba(59, 130, 246, 0.1)',
                         borderWidth: 3,
+                        pointBackgroundColor: pointColors,
+                        pointBorderColor: pointColors,
                         pointRadius: 4,
                         tension: 0.1
                     }]
@@ -408,7 +411,16 @@
                 options: {
                     responsive: true,
                     maintainAspectRatio: false,
-                    plugins: { legend: { display: false } },
+                    plugins: { 
+                        legend: { display: false },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    return 'Revenue: ' + formatCurrency(context.raw);
+                                }
+                            }
+                        }
+                    },
                     scales: {
                         y: {
                             beginAtZero: false,
@@ -424,32 +436,68 @@
         }
 
         function updateProfitChart() {
-            const ctx = document.getElementById('profitChart');
+            var ctx = document.getElementById('profitChart');
             if (!ctx) return;
             
-            const actualData = dashboardData.monthlyData?.filter(function(item) { return item.period === 'Actual'; }) || [];
-            const forecastData = dashboardData.monthlyData?.filter(function(item) { return item.period === 'Forecast' && item.scenario === selectedScenario; }) || [];
-            const chartData = actualData.concat(forecastData).slice(0, 36);
+            var actualData = [];
+            var forecastData = [];
+            
+            if (dashboardData.monthlyData) {
+                for (var i = 0; i < dashboardData.monthlyData.length; i++) {
+                    var item = dashboardData.monthlyData[i];
+                    if (item.period === 'Actual') {
+                        actualData.push(item);
+                    } else if (item.period === 'Forecast' && item.scenario === selectedScenario) {
+                        forecastData.push(item);
+                    }
+                }
+            }
+            
+            var chartData = actualData.concat(forecastData).slice(0, 48);
             
             if (profitChart) profitChart.destroy();
+            
+            var labels = [];
+            var grossProfitData = [];
+            var ebitdaData = [];
+            var netProfitData = [];
+            
+            for (var i = 0; i < chartData.length; i++) {
+                var d = chartData[i];
+                labels.push(d.dateLabel || d.monthName || 'Unknown');
+                grossProfitData.push(d.grossProfit || 0);
+                ebitdaData.push(d.ebitda || 0);
+                netProfitData.push(d.netProfit || 0);
+            }
             
             profitChart = new Chart(ctx, {
                 type: 'line',
                 data: {
-                    labels: chartData.map(function(d) { return d.dateLabel || 'Unknown'; }),
+                    labels: labels,
                     datasets: [
                         {
                             label: 'Gross Profit',
-                            data: chartData.map(function(d) { return d.grossProfit || 0; }),
+                            data: grossProfitData,
                             borderColor: '#10b981',
+                            backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                            borderWidth: 2,
+                            pointRadius: 0,
+                            tension: 0.1
+                        },
+                        {
+                            label: 'EBITDA',
+                            data: ebitdaData,
+                            borderColor: '#f59e0b',
+                            backgroundColor: 'rgba(245, 158, 11, 0.1)',
                             borderWidth: 2,
                             pointRadius: 0,
                             tension: 0.1
                         },
                         {
                             label: 'Net Profit',
-                            data: chartData.map(function(d) { return d.netProfit || 0; }),
+                            data: netProfitData,
                             borderColor: '#dc2626',
+                            backgroundColor: 'rgba(220, 38, 38, 0.1)',
                             borderWidth: 2,
                             pointRadius: 0,
                             tension: 0.1
@@ -459,6 +507,15 @@
                 options: {
                     responsive: true,
                     maintainAspectRatio: false,
+                    plugins: {
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    return context.dataset.label + ': ' + formatCurrency(context.raw);
+                                }
+                            }
+                        }
+                    },
                     scales: {
                         y: {
                             beginAtZero: false,
@@ -474,25 +531,36 @@
         }
 
         function updateSummaryTable() {
-            const summary = getPeriodSummary(selectedScenario);
-            const tbody = document.querySelector('#summaryTable tbody');
+            var summary = getPeriodSummary(selectedScenario);
+            var tbody = document.querySelector('#summaryTable tbody');
             
-            tbody.innerHTML = [
-                ['Revenue', summary.trailing12M?.revenue, summary.year1?.revenue, summary.year2?.revenue, summary.year3?.revenue],
-                ['Materials (23%)', summary.trailing12M?.materials, summary.year1?.materials, summary.year2?.materials, summary.year3?.materials],
-                ['Direct Labor (18%)', summary.trailing12M?.directLabor, summary.year1?.directLabor, summary.year2?.directLabor, summary.year3?.directLabor],
-                ['Gross Profit', summary.trailing12M?.grossProfit, summary.year1?.grossProfit, summary.year2?.grossProfit, summary.year3?.grossProfit],
-                ['Operating Expenses (40%)', summary.trailing12M?.opex, summary.year1?.opex, summary.year2?.opex, summary.year3?.opex],
-                ['Net Profit', summary.trailing12M?.netProfit, summary.year1?.netProfit, summary.year2?.netProfit, summary.year3?.netProfit]
-            ].map(function(row) {
-                return '<tr><td><strong>' + row[0] + '</strong></td>' + 
-                       row.slice(1).map(function(val) { return '<td>' + formatCurrency(val || 0) + '</td>'; }).join('') + '</tr>';
-            }).join('');
+            var rows = [
+                ['Revenue', summary.trailing12M.revenue, summary.year1.revenue, summary.year2.revenue, summary.year3.revenue],
+                ['Materials (23%)', summary.trailing12M.materials, summary.year1.materials, summary.year2.materials, summary.year3.materials],
+                ['Direct Labor (18%)', summary.trailing12M.directLabor, summary.year1.directLabor, summary.year2.directLabor, summary.year3.directLabor],
+                ['Gross Profit', summary.trailing12M.grossProfit, summary.year1.grossProfit, summary.year2.grossProfit, summary.year3.grossProfit],
+                ['Operating Expenses (40%)', summary.trailing12M.opex, summary.year1.opex, summary.year2.opex, summary.year3.opex],
+                ['Net Profit', summary.trailing12M.netProfit, summary.year1.netProfit, summary.year2.netProfit, summary.year3.netProfit]
+            ];
+            
+            var html = '';
+            for (var i = 0; i < rows.length; i++) {
+                var row = rows[i];
+                html += '<tr><td><strong>' + row[0] + '</strong></td>';
+                for (var j = 1; j < row.length; j++) {
+                    html += '<td>' + formatCurrency(row[j] || 0) + '</td>';
+                }
+                html += '</tr>';
+            }
+            tbody.innerHTML = html;
         }
 
         function updateCompanyName() {
-            const companyName = dashboardData.businessAssumptions?.operatorName || 'The Brothers that Just do Gutters';
-            const displayName = companyName === 'No report submitted' ? 'The Brothers that Just do Gutters' : companyName;
+            var companyName = 'The Brothers that Just do Gutters';
+            if (dashboardData.businessAssumptions && dashboardData.businessAssumptions.operatorName) {
+                companyName = dashboardData.businessAssumptions.operatorName;
+            }
+            var displayName = companyName === 'No report submitted' ? 'The Brothers that Just do Gutters' : companyName;
             document.getElementById('company-name').textContent = displayName + ' - Financial Forecasting';
         }
 
@@ -509,6 +577,47 @@
                 maximumFractionDigits: 0,
             }).format(value || 0);
         }
+
+        // Event listeners
+        window.addEventListener('load', function() {
+            console.log('Dashboard loading...');
+            updateDebugInfo('Dashboard loading...');
+            
+            var urlParams = new URLSearchParams(window.location.search);
+            var webhookData = urlParams.get('data');
+            
+            console.log('URL has data parameter:', !!webhookData);
+            updateDebugInfo('URL Check: ' + (webhookData ? 'Data found (' + webhookData.length + ' chars)' : 'No data found'));
+            
+            if (webhookData) {
+                processWebhookData(webhookData);
+            } else {
+                var storedData = getStoredData();
+                if (storedData) {
+                    updateDebugInfo('Found stored data, loading dashboard...');
+                    dashboardData = storedData;
+                    showDashboard();
+                    updateDashboard();
+                } else {
+                    updateDebugInfo('No data found. Upload a file or run N8N workflow.');
+                }
+            }
+        });
+
+        document.addEventListener('DOMContentLoaded', function() {
+            var scenarioButtons = document.querySelectorAll('.scenario-btn');
+            for (var i = 0; i < scenarioButtons.length; i++) {
+                scenarioButtons[i].addEventListener('click', function() {
+                    var allButtons = document.querySelectorAll('.scenario-btn');
+                    for (var j = 0; j < allButtons.length; j++) {
+                        allButtons[j].classList.remove('active');
+                    }
+                    this.classList.add('active');
+                    selectedScenario = this.getAttribute('data-scenario');
+                    updateDashboard();
+                });
+            }
+        });
     </script>
 </body>
 </html>
