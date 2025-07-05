@@ -112,20 +112,14 @@
             transition: border-color 0.2s, background-color 0.2s;
         }
         
-        .upload-area.dragover {
-            border-color: #3b82f6;
-            background-color: #eff6ff;
-        }
-        
-        .upload-area h2 {
-            font-size: 1.5rem;
+        .debug-info {
+            background: #f0f9ff;
+            border: 1px solid #0284c7;
+            padding: 1rem;
+            border-radius: 0.5rem;
             margin-bottom: 1rem;
-            color: #1f2937;
-        }
-        
-        .upload-area p {
-            color: #6b7280;
-            margin-bottom: 1.5rem;
+            font-family: monospace;
+            font-size: 0.875rem;
         }
         
         .scenario-selector {
@@ -162,14 +156,6 @@
         .scenario-btn.active {
             background: #3b82f6;
             color: white;
-        }
-        
-        .scenario-btn:hover {
-            background: #e5e7eb;
-        }
-        
-        .scenario-btn.active:hover {
-            background: #2563eb;
         }
         
         .metrics-grid {
@@ -323,37 +309,6 @@
             0% { transform: rotate(0deg); }
             100% { transform: rotate(360deg); }
         }
-        
-        .auto-refresh {
-            background: #eff6ff;
-            border: 1px solid #bfdbfe;
-            color: #1d4ed8;
-            padding: 0.75rem 1rem;
-            border-radius: 0.5rem;
-            margin-bottom: 1rem;
-            font-size: 0.875rem;
-        }
-        
-        @media (max-width: 768px) {
-            .header-content {
-                flex-direction: column;
-                text-align: center;
-            }
-            
-            .charts-grid {
-                grid-template-columns: 1fr;
-            }
-            
-            .scenario-buttons {
-                flex-direction: column;
-            }
-            
-            .data-freshness {
-                flex-direction: column;
-                align-items: flex-start;
-                gap: 0.5rem;
-            }
-        }
     </style>
 </head>
 <body>
@@ -378,8 +333,9 @@
 
     <div class="main-content">
         <div class="container">
-            <div id="autoRefreshNote" class="auto-refresh hidden">
-                💡 This dashboard automatically refreshes with the latest data from N8N. Data is loaded from URL parameters when updated.
+            <div id="debugInfo" class="debug-info">
+                <strong>🔍 Debug Info:</strong><br>
+                <span id="debugText">Loading...</span>
             </div>
 
             <div id="uploadArea" class="upload-area">
@@ -497,36 +453,58 @@
         let revenueChart = null;
         let profitChart = null;
 
+        // Debug function
+        function updateDebugInfo(message) {
+            document.getElementById('debugText').innerHTML = message;
+        }
+
         // Auto-load data on page load
         window.addEventListener('load', () => {
-            console.log('Dashboard loading...');
+            console.log('🚀 Dashboard loading...');
+            updateDebugInfo('Dashboard loading...');
             
-            // Check for URL parameters first
+            // Check URL parameters
+            const fullUrl = window.location.href;
             const urlParams = new URLSearchParams(window.location.search);
             const webhookData = urlParams.get('data');
             
+            console.log('🔍 Full URL:', fullUrl);
+            console.log('🔍 URL has data parameter:', !!webhookData);
+            
+            updateDebugInfo(`
+                URL Check:<br>
+                • Has data parameter: ${!!webhookData ? 'YES' : 'NO'}<br>
+                • Data length: ${webhookData ? webhookData.length : 0} chars<br>
+                • Processing...
+            `);
+            
             if (webhookData) {
-                console.log('Found data in URL parameters');
-                document.getElementById('autoRefreshNote').classList.remove('hidden');
+                console.log('📊 Found data in URL, processing...');
                 processWebhookData(webhookData);
             } else {
-                // Check localStorage as fallback
+                console.log('💾 No URL data, checking localStorage...');
                 const storedData = getStoredData();
                 if (storedData) {
-                    console.log('Loading stored data...');
+                    console.log('✅ Found stored data');
+                    updateDebugInfo('Found stored data, loading dashboard...');
                     dashboardData = storedData;
                     showDashboard();
                     updateDashboard();
                 } else {
-                    console.log('No data found - showing upload area');
+                    console.log('❌ No data found anywhere');
+                    updateDebugInfo('No data found. Upload a file or run N8N workflow.');
                 }
             }
         });
 
         function processWebhookData(webhookData) {
             try {
+                updateDebugInfo('Decoding URL data...');
+                console.log('🔄 Decoding webhook data...');
+                
                 const decodedData = JSON.parse(decodeURIComponent(webhookData));
-                console.log('Decoded webhook data successfully');
+                console.log('✅ Successfully decoded webhook data');
+                console.log('📋 Decoded data keys:', Object.keys(decodedData));
                 
                 let processedData;
                 if (Array.isArray(decodedData) && decodedData.length > 0) {
@@ -535,17 +513,34 @@
                     processedData = decodedData;
                 }
                 
+                console.log('📊 Processed data keys:', Object.keys(processedData));
+                
                 if (processedData.monthlyData && processedData.periodSummaries) {
+                    console.log('✅ Valid data structure found');
+                    updateDebugInfo(`
+                        ✅ Data loaded successfully!<br>
+                        • Monthly records: ${processedData.monthlyData.length}<br>
+                        • Period summaries: ${processedData.periodSummaries.length}<br>
+                        • Source: N8N Automation
+                    `);
+                    
                     storeData(processedData);
                     dashboardData = processedData;
                     showDashboard();
                     updateDashboard();
                 } else {
-                    console.error('Invalid data structure from webhook');
+                    console.error('❌ Invalid data structure');
+                    updateDebugInfo(`
+                        ❌ Invalid data structure<br>
+                        • Has monthlyData: ${!!processedData.monthlyData}<br>
+                        • Has periodSummaries: ${!!processedData.periodSummaries}<br>
+                        • Available keys: ${Object.keys(processedData).join(', ')}
+                    `);
                     showError('Invalid data structure received from automation');
                 }
             } catch (error) {
-                console.error('Error processing webhook data:', error);
+                console.error('❌ Error processing webhook data:', error);
+                updateDebugInfo(`❌ Error: ${error.message}`);
                 showError('Error processing automated data: ' + error.message);
             }
         }
@@ -555,9 +550,9 @@
             try {
                 localStorage.setItem('proforma_data', JSON.stringify(data));
                 localStorage.setItem('proforma_timestamp', Date.now().toString());
-                console.log('Data stored successfully');
+                console.log('💾 Data stored successfully');
             } catch (error) {
-                console.error('Error storing data:', error);
+                console.error('❌ Error storing data:', error);
             }
         }
 
@@ -569,7 +564,7 @@
                     return JSON.parse(storedData);
                 }
             } catch (error) {
-                console.error('Error retrieving stored data:', error);
+                console.error('❌ Error retrieving stored data:', error);
             }
             return null;
         }
@@ -618,26 +613,6 @@
             if (!file) return;
             processFile(file);
         }
-
-        const uploadArea = document.getElementById('uploadArea');
-        
-        uploadArea.addEventListener('dragover', (e) => {
-            e.preventDefault();
-            uploadArea.classList.add('dragover');
-        });
-        
-        uploadArea.addEventListener('dragleave', () => {
-            uploadArea.classList.remove('dragover');
-        });
-        
-        uploadArea.addEventListener('drop', (e) => {
-            e.preventDefault();
-            uploadArea.classList.remove('dragover');
-            const files = e.dataTransfer.files;
-            if (files.length > 0) {
-                processFile(files[0]);
-            }
-        });
 
         async function processFile(file) {
             if (!file.name.endsWith('.json')) {
@@ -694,6 +669,7 @@
         function showDashboard() {
             document.getElementById('uploadArea').classList.add('hidden');
             document.getElementById('errorMessage').classList.add('hidden');
+            document.getElementById('debugInfo').classList.add('hidden');
             document.getElementById('dashboardContent').classList.remove('hidden');
         }
 
@@ -718,9 +694,9 @@
                 updateSummaryTable();
                 updateCompanyName();
                 updateDataFreshness();
-                console.log('Dashboard updated successfully');
+                console.log('✅ Dashboard updated successfully');
             } catch (error) {
-                console.error('Error updating dashboard:', error);
+                console.error('❌ Error updating dashboard:', error);
                 showError('Error updating dashboard: ' + error.message);
             }
         }
@@ -820,7 +796,6 @@
                             beginAtZero: false,
                             ticks: {
                                 callback: function(value) {
-                                    return 'value) {
                                     return '$' + (value / 1000).toFixed(0) + 'K';
                                 }
                             }
@@ -892,7 +867,8 @@
                         y: {
                             beginAtZero: false,
                             ticks: {
-                                callback: function( + (value / 1000).toFixed(0) + 'K';
+                                callback: function(value) {
+                                    return ' + (value / 1000).toFixed(0) + 'K';
                                 }
                             }
                         }
@@ -982,76 +958,4 @@
         }
     </script>
 </body>
-</html>value) {
-                                    return '$' + (value / 1000).toFixed(0) + 'K';
-                                }
-                            }
-                        }
-                    }
-                }
-            });
-        }
-
-        function updateProfitChart() {
-            const ctx = document.getElementById('profitChart');
-            if (!ctx) return;
-            
-            const actualData = getActualHistory();
-            const forecastData = getScenarioForecast(selectedScenario);
-            const chartData = [...actualData, ...forecastData].slice(0, 36);
-            
-            if (profitChart) {
-                profitChart.destroy();
-            }
-            
-            profitChart = new Chart(ctx, {
-                type: 'line',
-                data: {
-                    labels: chartData.map(d => d.dateLabel || 'Unknown'),
-                    datasets: [
-                        {
-                            label: 'Gross Profit',
-                            data: chartData.map(d => d.grossProfit || 0),
-                            borderColor: '#10b981',
-                            backgroundColor: 'rgba(16, 185, 129, 0.1)',
-                            borderWidth: 2,
-                            pointRadius: 0,
-                            tension: 0.1
-                        },
-                        {
-                            label: 'EBITDA',
-                            data: chartData.map(d => d.ebitda || 0),
-                            borderColor: '#f59e0b',
-                            backgroundColor: 'rgba(245, 158, 11, 0.1)',
-                            borderWidth: 2,
-                            pointRadius: 0,
-                            tension: 0.1
-                        },
-                        {
-                            label: 'Net Profit',
-                            data: chartData.map(d => d.netProfit || 0),
-                            borderColor: '#dc2626',
-                            backgroundColor: 'rgba(220, 38, 38, 0.1)',
-                            borderWidth: 2,
-                            pointRadius: 0,
-                            tension: 0.1
-                        }
-                    ]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: {
-                        tooltip: {
-                            callbacks: {
-                                label: function(context) {
-                                    return context.dataset.label + ': ' + formatCurrency(context.raw);
-                                }
-                            }
-                        }
-                    },
-                    scales: {
-                        y: {
-                            beginAtZero: false,
-                            ticks: {
-                                callback: function(
+</html>
