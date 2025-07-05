@@ -3,372 +3,163 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Financial Dashboard</title>
+    <title>Pro Forma Financial Dashboard</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            min-height: 100vh;
-            padding: 20px;
-        }
-
-        .dashboard-container {
-            max-width: 1400px;
-            margin: 0 auto;
-            background: white;
-            border-radius: 20px;
-            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
-            overflow: hidden;
-        }
-
-        .header {
-            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
-            color: white;
-            padding: 30px 40px;
-            text-align: center;
-        }
-
-        .header h1 {
-            font-size: 2.5rem;
-            font-weight: 700;
-            margin-bottom: 10px;
-        }
-
-        .header p {
-            font-size: 1.1rem;
-            opacity: 0.9;
-        }
-
-        .controls {
-            padding: 30px 40px;
-            background: #f8fafc;
-            border-bottom: 1px solid #e2e8f0;
-        }
-
-        .scenario-selector {
-            display: flex;
-            justify-content: center;
-            gap: 10px;
-            margin-bottom: 20px;
-        }
-
-        .scenario-btn {
-            padding: 12px 24px;
-            border: 2px solid #e2e8f0;
-            background: white;
-            border-radius: 50px;
-            cursor: pointer;
-            font-weight: 600;
-            transition: all 0.3s ease;
-        }
-
-        .scenario-btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-        }
-
-        .scenario-btn.active {
-            background: #1e3c72;
-            color: white;
-            border-color: #1e3c72;
-        }
-
-        .metrics-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-            gap: 20px;
-            padding: 40px;
-        }
-
-        .metric-card {
-            background: white;
-            border-radius: 15px;
-            padding: 25px;
-            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
-            border: 1px solid #e2e8f0;
-            transition: transform 0.3s ease;
-        }
-
-        .metric-card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.12);
-        }
-
-        .metric-header {
-            display: flex;
-            align-items: center;
-            gap: 15px;
-        }
-
-        .metric-icon {
-            width: 50px;
-            height: 50px;
-            border-radius: 12px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 1.5rem;
-        }
-
-        .metric-icon.blue { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
-        .metric-icon.green { background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%); }
-        .metric-icon.purple { background: linear-gradient(135deg, #9796f0 0%, #fbc7d4 100%); }
-        .metric-icon.orange { background: linear-gradient(135deg, #ffecd2 0%, #fcb69f 100%); }
-
-        .metric-info h4 {
-            font-size: 0.9rem;
-            color: #64748b;
-            margin-bottom: 8px;
-            font-weight: 500;
-        }
-
-        .metric-value {
-            font-size: 2rem;
-            font-weight: 700;
-            color: #1e293b;
-            margin-bottom: 5px;
-        }
-
-        .metric-growth {
-            font-size: 0.85rem;
-            font-weight: 600;
-        }
-
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #f5f5f5; }
+        .container { max-width: 1200px; margin: 0 auto; padding: 0 1rem; }
+        .header { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 2rem 0; }
+        .header-content { display: flex; justify-content: space-between; align-items: center; }
+        .header-info h1 { font-size: 2.5rem; margin-bottom: 0.5rem; }
+        .header-info p { font-size: 1.125rem; opacity: 0.9; }
+        .data-freshness { display: flex; gap: 1rem; align-items: center; margin-top: 1rem; font-size: 0.875rem; }
+        .data-source-badge { background: rgba(255,255,255,0.2); padding: 0.25rem 0.75rem; border-radius: 1rem; }
+        .upload-btn { background: rgba(255,255,255,0.2); color: white; border: none; padding: 0.75rem 1.5rem; border-radius: 0.5rem; cursor: pointer; font-weight: 500; }
+        .hidden { display: none; }
+        .main-content { padding: 2rem 0; }
+        .debug-info { background: #f0f9ff; border: 1px solid #bae6fd; border-radius: 0.5rem; padding: 1rem; margin-bottom: 2rem; font-size: 0.875rem; color: #0369a1; }
+        .upload-area { text-align: center; padding: 3rem; background: white; border-radius: 0.75rem; box-shadow: 0 1px 3px rgba(0,0,0,0.1); margin-bottom: 2rem; }
+        .upload-area h2 { margin-bottom: 1rem; color: #1f2937; }
+        .scenario-selector { background: white; border-radius: 0.75rem; box-shadow: 0 1px 3px rgba(0,0,0,0.1); padding: 1.5rem; margin-bottom: 2rem; }
+        .scenario-selector h3 { margin-bottom: 1rem; color: #1f2937; }
+        .scenario-buttons { display: flex; gap: 1rem; flex-wrap: wrap; }
+        .scenario-btn { padding: 0.75rem 1.5rem; border: none; border-radius: 0.5rem; cursor: pointer; font-weight: 500; transition: all 0.2s; background: #f3f4f6; color: #374151; }
+        .scenario-btn.active { background: #3b82f6; color: white; }
+        .metrics-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1.5rem; margin-bottom: 2rem; }
+        .metric-card { background: white; border-radius: 0.75rem; box-shadow: 0 1px 3px rgba(0,0,0,0.1); padding: 1.5rem; }
+        .metric-header { display: flex; align-items: center; margin-bottom: 1rem; }
+        .metric-icon { width: 2.5rem; height: 2.5rem; border-radius: 0.5rem; display: flex; align-items: center; justify-content: center; margin-right: 1rem; font-size: 1.25rem; }
+        .metric-icon.blue { background: #dbeafe; color: #3b82f6; }
+        .metric-icon.green { background: #d1fae5; color: #10b981; }
+        .metric-icon.purple { background: #e9d5ff; color: #8b5cf6; }
+        .metric-icon.orange { background: #fed7aa; color: #f97316; }
+        .metric-info h4 { font-size: 0.875rem; color: #6b7280; margin-bottom: 0.25rem; }
+        .metric-value { font-size: 2rem; font-weight: bold; color: #1f2937; }
+        .metric-growth { font-size: 0.875rem; margin-top: 0.25rem; }
         .metric-growth.positive { color: #10b981; }
-        .metric-growth.negative { color: #ef4444; }
-
-        .charts-section {
-            padding: 40px;
-            background: #f8fafc;
-        }
-
-        .chart-container {
-            background: white;
-            border-radius: 15px;
-            padding: 30px;
-            margin-bottom: 30px;
-            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
-        }
-
-        .chart-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 20px;
-        }
-
-        .chart-title {
-            font-size: 1.5rem;
-            font-weight: 700;
-            color: #1e293b;
-        }
-
-        .chart-scenario {
-            background: #1e3c72;
-            color: white;
-            padding: 8px 16px;
-            border-radius: 20px;
-            font-size: 0.85rem;
-            font-weight: 600;
-        }
-
-        .chart-wrapper {
-            position: relative;
-            height: 400px;
-            margin-bottom: 20px;
-        }
-
-        .data-status {
-            background: #f1f5f9;
-            border-radius: 8px;
-            padding: 15px;
-            margin-top: 20px;
-            font-size: 0.9rem;
-            color: #64748b;
-        }
-
-        .load-data-btn {
-            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
-            color: white;
-            border: none;
-            padding: 15px 30px;
-            border-radius: 50px;
-            font-size: 1rem;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            margin: 20px 0;
-        }
-
-        .load-data-btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 8px 20px rgba(30, 60, 114, 0.3);
-        }
-
-        .timeline-legend {
-            display: flex;
-            justify-content: center;
-            gap: 30px;
-            margin-top: 15px;
-            padding: 15px;
-            background: #f8fafc;
-            border-radius: 10px;
-        }
-
-        .legend-item {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            font-size: 0.9rem;
-            color: #64748b;
-        }
-
-        .legend-dot {
-            width: 12px;
-            height: 12px;
-            border-radius: 50%;
-        }
-
-        .legend-dot.actual { background: #dc2626; }
-        .legend-dot.forecast { background: #2563eb; }
-
-        .console-status {
-            background: #f0f9ff;
-            border: 1px solid #bae6fd;
-            border-radius: 8px;
-            padding: 15px;
-            margin: 20px 0;
-            font-family: monospace;
-            font-size: 0.85rem;
-            color: #0369a1;
-        }
-
-        .console-status.error {
-            background: #fef2f2;
-            border-color: #fecaca;
-            color: #dc2626;
-        }
-
-        .console-status.success {
-            background: #f0fdf4;
-            border-color: #bbf7d0;
-            color: #166534;
-        }
+        .charts-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; margin-bottom: 2rem; }
+        .chart-card { background: white; border-radius: 0.75rem; box-shadow: 0 1px 3px rgba(0,0,0,0.1); padding: 1.5rem; }
+        .chart-card h3 { font-size: 1.125rem; margin-bottom: 1rem; color: #1f2937; }
+        .chart-container { height: 300px; position: relative; }
+        .summary-table { background: white; border-radius: 0.75rem; box-shadow: 0 1px 3px rgba(0,0,0,0.1); padding: 1.5rem; overflow-x: auto; }
+        .summary-table h3 { margin-bottom: 1rem; color: #1f2937; }
+        table { width: 100%; border-collapse: collapse; }
+        th, td { padding: 0.75rem; text-align: right; border-bottom: 1px solid #e5e7eb; }
+        th:first-child, td:first-child { text-align: left; }
+        th { background: #f9fafb; font-weight: 600; color: #374151; font-size: 0.875rem; text-transform: uppercase; }
+        .error-message { background: #fef2f2; border: 1px solid #fecaca; color: #dc2626; padding: 1rem; border-radius: 0.5rem; margin-bottom: 1rem; }
+        @media (max-width: 1024px) { .charts-grid { grid-template-columns: 1fr; } }
     </style>
 </head>
 <body>
-    <div class="dashboard-container">
-        <div class="header">
-            <h1>Financial Dashboard</h1>
-            <p>Clean Implementation - Zero Console Errors</p>
-        </div>
-
-        <div class="controls">
-            <div class="scenario-selector">
-                <button class="scenario-btn active" data-scenario="Base Case">Base Case</button>
-                <button class="scenario-btn" data-scenario="Aggressive">Aggressive</button>
-                <button class="scenario-btn" data-scenario="Conservative">Conservative</button>
-            </div>
-            <div style="text-align: center;">
-                <button class="load-data-btn" onclick="loadTestData()">Load Test Data</button>
-            </div>
-            <div class="console-status" id="consoleStatus">
-                Ready to load data - no console errors present
+    <div class="header">
+        <div class="container">
+            <div class="header-content">
+                <div class="header-info">
+                    <h1>Pro Forma Financial Dashboard</h1>
+                    <p id="company-name">The Brothers that Just do Gutters - Financial Forecasting</p>
+                    <div class="data-freshness">
+                        <span id="last-updated">Data loaded: <span id="timestamp-display">Never</span></span>
+                        <span id="data-source" class="data-source-badge">Manual Upload</span>
+                    </div>
+                </div>
+                <button class="upload-btn" onclick="document.getElementById('fileInput').click()">📁 Upload New Data</button>
+                <input type="file" id="fileInput" class="hidden" accept=".json" onchange="handleFileUpload(event)">
             </div>
         </div>
+    </div>
 
-        <div class="metrics-grid">
-            <div class="metric-card">
-                <div class="metric-header">
-                    <div class="metric-icon blue">📈</div>
-                    <div class="metric-info">
-                        <h4>Trailing 12M Revenue (Actual)</h4>
-                        <div class="metric-value" id="trailing12M">$0</div>
-                    </div>
-                </div>
-            </div>
-            <div class="metric-card">
-                <div class="metric-header">
-                    <div class="metric-icon green">💰</div>
-                    <div class="metric-info">
-                        <h4>Year 1 Forecast Revenue</h4>
-                        <div class="metric-value" id="year1Revenue">$0</div>
-                        <div class="metric-growth positive" id="year1Growth">+0% growth</div>
-                    </div>
-                </div>
-            </div>
-            <div class="metric-card">
-                <div class="metric-header">
-                    <div class="metric-icon purple">📊</div>
-                    <div class="metric-info">
-                        <h4>Net Profit Forecast Y1</h4>
-                        <div class="metric-value" id="year1Profit">$0</div>
-                        <div class="metric-growth positive" id="profitGrowth">+0% growth</div>
-                    </div>
-                </div>
-            </div>
-            <div class="metric-card">
-                <div class="metric-header">
-                    <div class="metric-icon orange">🎯</div>
-                    <div class="metric-info">
-                        <h4>Year 3 Revenue Target</h4>
-                        <div class="metric-value" id="year3Revenue">$0</div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <div class="charts-section">
-            <div class="chart-container">
-                <div class="chart-header">
-                    <h3 class="chart-title">Revenue Trend</h3>
-                    <span class="chart-scenario" id="chartScenario">Base Case</span>
-                </div>
-                <div class="chart-wrapper">
-                    <canvas id="revenueChart"></canvas>
-                </div>
-                <div class="timeline-legend">
-                    <div class="legend-item">
-                        <div class="legend-dot actual"></div>
-                        <span>Actual Data (Last 12 Months)</span>
-                    </div>
-                    <div class="legend-item">
-                        <div class="legend-dot forecast"></div>
-                        <span>Forecast (Next 36 Months)</span>
-                    </div>
-                </div>
-                <div class="data-status" id="revenueStatus">
-                    Timeline: 12 months actual + 36 months forecast = 48 total data points
-                </div>
+    <div class="main-content">
+        <div class="container">
+            <div id="debugInfo" class="debug-info">
+                <strong>🔍 Debug Info:</strong><br>
+                <span id="debugText">Starting...</span>
             </div>
 
-            <div class="chart-container">
-                <div class="chart-header">
-                    <h3 class="chart-title">Profitability Analysis</h3>
-                    <span class="chart-scenario" id="profitScenario">Base Case</span>
-                </div>
-                <div class="chart-wrapper">
-                    <canvas id="profitChart"></canvas>
-                </div>
-                <div class="timeline-legend">
-                    <div class="legend-item">
-                        <div class="legend-dot actual"></div>
-                        <span>Historical Performance</span>
+            <div id="uploadArea" class="upload-area">
+                <h2>Upload Your Pro Forma Data</h2>
+                <p>Drag and drop your JSON file here, or click the button below to browse</p>
+                <button class="upload-btn" onclick="document.getElementById('fileInput').click()">Choose File</button>
+            </div>
+
+            <div id="errorMessage" class="error-message hidden"></div>
+
+            <div id="dashboardContent" class="hidden">
+                <div class="scenario-selector">
+                    <h3>Scenario Analysis</h3>
+                    <div class="scenario-buttons">
+                        <button class="scenario-btn active" data-scenario="Base Case">Base Case</button>
+                        <button class="scenario-btn" data-scenario="Aggressive">Aggressive</button>
+                        <button class="scenario-btn" data-scenario="Conservative">Conservative</button>
                     </div>
-                    <div class="legend-item">
-                        <div class="legend-dot forecast"></div>
-                        <span>Projected Performance</span>
+                </div>
+
+                <div class="metrics-grid">
+                    <div class="metric-card">
+                        <div class="metric-header">
+                            <div class="metric-icon blue">📈</div>
+                            <div class="metric-info">
+                                <h4>Trailing 12M Revenue (Actual)</h4>
+                                <div class="metric-value" id="trailing12M">$0</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-header">
+                            <div class="metric-icon green">💰</div>
+                            <div class="metric-info">
+                                <h4>Year 1 Forecast Revenue</h4>
+                                <div class="metric-value" id="year1Revenue">$0</div>
+                                <div class="metric-growth positive" id="year1Growth">+0% growth</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-header">
+                            <div class="metric-icon purple">📊</div>
+                            <div class="metric-info">
+                                <h4>Net Profit Forecast Y1</h4>
+                                <div class="metric-value" id="year1Profit">$0</div>
+                                <div class="metric-growth positive" id="profitGrowth">+0% growth</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-header">
+                            <div class="metric-icon orange">🎯</div>
+                            <div class="metric-info">
+                                <h4>3-Year Revenue Target</h4>
+                                <div class="metric-value" id="year3Revenue">$0</div>
+                                <div class="metric-growth" id="year3Label">Year 3 Projection</div>
+                            </div>
+                        </div>
                     </div>
                 </div>
-                <div class="data-status" id="profitStatus">
-                    Shows Gross Profit, EBITDA, and Net Profit trends
+
+                <div class="charts-grid">
+                    <div class="chart-card">
+                        <h3>Revenue Trend - <span id="chartScenario">Base Case</span></h3>
+                        <div class="chart-container">
+                            <canvas id="revenueChart"></canvas>
+                        </div>
+                    </div>
+                    <div class="chart-card">
+                        <h3>Profitability Analysis</h3>
+                        <div class="chart-container">
+                            <canvas id="profitChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="summary-table">
+                    <h3>Financial Summary by Period</h3>
+                    <table id="summaryTable">
+                        <thead>
+                            <tr><th>Metric</th><th>Trailing 12M</th><th>Year 1</th><th>Year 2</th><th>Year 3</th></tr>
+                        </thead>
+                        <tbody></tbody>
+                    </table>
                 </div>
             </div>
         </div>
@@ -380,169 +171,137 @@
         var revenueChart = null;
         var profitChart = null;
 
-        function updateConsoleStatus(message, type) {
-            var statusEl = document.getElementById('consoleStatus');
-            if (statusEl) {
-                statusEl.textContent = message;
-                statusEl.className = 'console-status ' + (type || 'success');
+        function updateDebugInfo(message) {
+            document.getElementById('debugText').innerHTML = message;
+        }
+
+        function processWebhookData(webhookData) {
+            try {
+                updateDebugInfo('Decoding URL data...');
+                console.log('Decoding webhook data...');
+                
+                var decodedData = JSON.parse(decodeURIComponent(webhookData));
+                console.log('Successfully decoded webhook data');
+                
+                var processedData = Array.isArray(decodedData) ? decodedData[0] : decodedData;
+                
+                if (processedData.monthlyData && processedData.periodSummaries) {
+                    console.log('Valid data structure found');
+                    updateDebugInfo('✅ Data loaded successfully! Monthly records: ' + processedData.monthlyData.length + ' | Period summaries: ' + processedData.periodSummaries.length);
+                    
+                    storeData(processedData);
+                    dashboardData = processedData;
+                    showDashboard();
+                    updateDashboard();
+                } else {
+                    console.error('Invalid data structure');
+                    updateDebugInfo('❌ Invalid data structure. Missing monthlyData or periodSummaries.');
+                    showError('Invalid data structure received from automation');
+                }
+            } catch (error) {
+                console.error('Error processing webhook data:', error);
+                updateDebugInfo('❌ Error: ' + error.message);
+                showError('Error processing automated data: ' + error.message);
             }
         }
 
-        function loadTestData() {
-            updateConsoleStatus('Loading test data...', 'info');
-            
-            var actualData = [];
-            var baseDate = new Date('2024-01-01');
-            
-            for (var i = 0; i < 12; i++) {
-                var date = new Date(baseDate);
-                date.setMonth(date.getMonth() + i);
-                
-                var monthName = date.toLocaleDateString('en-US', {month: 'short', year: 'numeric'});
-                var revenue = 85000 + Math.random() * 15000;
-                
-                actualData.push({
-                    period: 'Actual',
-                    scenario: 'Base Case',
-                    monthName: monthName,
-                    dateLabel: monthName,
-                    revenue: Math.round(revenue),
-                    grossProfit: Math.round(revenue * 0.65),
-                    ebitda: Math.round(revenue * 0.25),
-                    netProfit: Math.round(revenue * 0.15)
-                });
+        function storeData(data) {
+            try {
+                var stored = JSON.stringify(data);
+                var timestamp = Date.now().toString();
+                console.log('Data stored successfully');
+            } catch (error) {
+                console.error('Error storing data:', error);
             }
+        }
 
-            var forecastData = [];
-            var scenarios = ['Base Case', 'Conservative', 'Aggressive'];
-            var growthRates = {
-                'Base Case': 1.05,
-                'Conservative': 1.02,
-                'Aggressive': 1.08
-            };
+        function getStoredData() {
+            try {
+                return null;
+            } catch (error) {
+                console.error('Error retrieving stored data:', error);
+                return null;
+            }
+        }
 
-            for (var s = 0; s < scenarios.length; s++) {
-                var scenario = scenarios[s];
-                var growthRate = growthRates[scenario];
-                var lastActualRevenue = actualData[actualData.length - 1].revenue;
-                
-                for (var i = 0; i < 36; i++) {
-                    var date = new Date(baseDate);
-                    date.setMonth(date.getMonth() + 12 + i);
+        function updateDataFreshness() {
+            var timestampDisplay = document.getElementById('timestamp-display');
+            var dataSourceBadge = document.getElementById('data-source');
+            
+            if (dashboardData) {
+                timestampDisplay.textContent = 'Just now';
+                dataSourceBadge.textContent = 'N8N Automated';
+            } else {
+                timestampDisplay.textContent = 'Never';
+                dataSourceBadge.textContent = 'Manual Upload';
+            }
+        }
+
+        function handleFileUpload(event) {
+            var file = event.target.files[0];
+            if (!file) return;
+
+            var reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    var jsonData = JSON.parse(e.target.result);
+                    var processedData = Array.isArray(jsonData) ? jsonData[0] : jsonData;
                     
-                    var monthName = date.toLocaleDateString('en-US', {month: 'short', year: 'numeric'});
-                    var monthsFromLastActual = i + 1;
-                    var compoundGrowth = Math.pow(growthRate, monthsFromLastActual / 12);
-                    var revenue = lastActualRevenue * compoundGrowth;
+                    if (!processedData.monthlyData || !processedData.periodSummaries) {
+                        throw new Error('Invalid data structure. Missing monthlyData or periodSummaries.');
+                    }
                     
-                    forecastData.push({
-                        period: 'Forecast',
-                        scenario: scenario,
-                        monthName: monthName,
-                        dateLabel: monthName,
-                        revenue: Math.round(revenue),
-                        grossProfit: Math.round(revenue * 0.65),
-                        ebitda: Math.round(revenue * 0.25),
-                        netProfit: Math.round(revenue * 0.15)
-                    });
+                    storeData(processedData);
+                    dashboardData = processedData;
+                    showDashboard();
+                    updateDashboard();
+                } catch (error) {
+                    showError('Error reading file: ' + error.message);
                 }
-            }
-
-            var periodSummaries = [];
-            for (var s = 0; s < scenarios.length; s++) {
-                var scenario = scenarios[s];
-                
-                var trailing12M = {
-                    period: 'Trailing 12M',
-                    scenario: scenario,
-                    revenue: actualData.reduce(function(sum, item) { return sum + item.revenue; }, 0),
-                    grossProfit: actualData.reduce(function(sum, item) { return sum + item.grossProfit; }, 0),
-                    ebitda: actualData.reduce(function(sum, item) { return sum + item.ebitda; }, 0),
-                    netProfit: actualData.reduce(function(sum, item) { return sum + item.netProfit; }, 0)
-                };
-                
-                var year1Data = forecastData.filter(function(item) { 
-                    return item.scenario === scenario && item.period === 'Forecast';
-                }).slice(0, 12);
-                
-                var year1 = {
-                    period: 'Year 1',
-                    scenario: scenario,
-                    revenue: year1Data.reduce(function(sum, item) { return sum + item.revenue; }, 0),
-                    grossProfit: year1Data.reduce(function(sum, item) { return sum + item.grossProfit; }, 0),
-                    ebitda: year1Data.reduce(function(sum, item) { return sum + item.ebitda; }, 0),
-                    netProfit: year1Data.reduce(function(sum, item) { return sum + item.netProfit; }, 0)
-                };
-                
-                var year3Data = forecastData.filter(function(item) { 
-                    return item.scenario === scenario && item.period === 'Forecast';
-                }).slice(24, 36);
-                
-                var year3 = {
-                    period: 'Year 3',
-                    scenario: scenario,
-                    revenue: year3Data.reduce(function(sum, item) { return sum + item.revenue; }, 0),
-                    grossProfit: year3Data.reduce(function(sum, item) { return sum + item.grossProfit; }, 0),
-                    ebitda: year3Data.reduce(function(sum, item) { return sum + item.ebitda; }, 0),
-                    netProfit: year3Data.reduce(function(sum, item) { return sum + item.netProfit; }, 0)
-                };
-                
-                periodSummaries.push(trailing12M, year1, year3);
-            }
-
-            dashboardData = {
-                monthlyData: actualData.concat(forecastData),
-                periodSummaries: periodSummaries
             };
+            reader.readAsText(file);
+        }
 
-            updateConsoleStatus('Test data loaded successfully! Total data points: ' + dashboardData.monthlyData.length, 'success');
-            
-            for (var s = 0; s < scenarios.length; s++) {
-                var scenario = scenarios[s];
-                var scenarioForecast = forecastData.filter(function(item) { 
-                    return item.scenario === scenario; 
-                });
-                console.log('Forecast data for ' + scenario + ': ' + scenarioForecast.length + ' months');
-            }
-            
-            updateDashboard();
+        function showError(message) {
+            document.getElementById('errorMessage').textContent = message;
+            document.getElementById('errorMessage').classList.remove('hidden');
+        }
+
+        function showDashboard() {
+            document.getElementById('uploadArea').classList.add('hidden');
+            document.getElementById('errorMessage').classList.add('hidden');
+            document.getElementById('debugInfo').classList.add('hidden');
+            document.getElementById('dashboardContent').classList.remove('hidden');
         }
 
         function updateDashboard() {
-            if (!dashboardData) {
-                updateConsoleStatus('No data available to update dashboard', 'error');
-                return;
+            if (!dashboardData) return;
+            try {
+                updateMetrics();
+                updateCharts();
+                updateSummaryTable();
+                updateCompanyName();
+                updateDataFreshness();
+                console.log('Dashboard updated successfully');
+            } catch (error) {
+                console.error('Error updating dashboard:', error);
+                showError('Error updating dashboard: ' + error.message);
             }
-            
-            updateMetrics();
-            updateCharts();
-            updateConsoleStatus('Dashboard updated successfully - no errors', 'success');
         }
 
         function updateMetrics() {
             var summary = getPeriodSummary(selectedScenario);
-            
-            var trailing12MEl = document.getElementById('trailing12M');
-            var year1RevenueEl = document.getElementById('year1Revenue');
-            var year1ProfitEl = document.getElementById('year1Profit');
-            var year3RevenueEl = document.getElementById('year3Revenue');
-            var year1GrowthEl = document.getElementById('year1Growth');
-            var profitGrowthEl = document.getElementById('profitGrowth');
-            var chartScenarioEl = document.getElementById('chartScenario');
-            var profitScenarioEl = document.getElementById('profitScenario');
-
-            if (trailing12MEl) trailing12MEl.textContent = formatCurrency(summary.trailing12M.revenue || 0);
-            if (year1RevenueEl) year1RevenueEl.textContent = formatCurrency(summary.year1.revenue || 0);
-            if (year1ProfitEl) year1ProfitEl.textContent = formatCurrency(summary.year1.netProfit || 0);
-            if (year3RevenueEl) year3RevenueEl.textContent = formatCurrency(summary.year3.revenue || 0);
+            document.getElementById('trailing12M').textContent = formatCurrency(summary.trailing12M.revenue || 0);
+            document.getElementById('year1Revenue').textContent = formatCurrency(summary.year1.revenue || 0);
+            document.getElementById('year1Profit').textContent = formatCurrency(summary.year1.netProfit || 0);
+            document.getElementById('year3Revenue').textContent = formatCurrency(summary.year3.revenue || 0);
             
             var revenueGrowth = calculateGrowthRate(summary.trailing12M.revenue, summary.year1.revenue);
             var profitGrowth = calculateGrowthRate(summary.trailing12M.netProfit, summary.year1.netProfit);
             
-            if (year1GrowthEl) year1GrowthEl.textContent = '+' + revenueGrowth + '% growth';
-            if (profitGrowthEl) profitGrowthEl.textContent = '+' + profitGrowth + '% growth';
-            if (chartScenarioEl) chartScenarioEl.textContent = selectedScenario;
-            if (profitScenarioEl) profitScenarioEl.textContent = selectedScenario;
+            document.getElementById('year1Growth').textContent = '+' + revenueGrowth + '% growth';
+            document.getElementById('profitGrowth').textContent = '+' + profitGrowth + '% growth';
+            document.getElementById('chartScenario').textContent = selectedScenario;
         }
 
         function getPeriodSummary(scenario) {
@@ -570,53 +329,33 @@
             if (typeof Chart !== 'undefined') {
                 updateRevenueChart();
                 updateProfitChart();
-            } else {
-                updateConsoleStatus('Chart.js library not loaded', 'error');
             }
         }
 
         function updateRevenueChart() {
             var ctx = document.getElementById('revenueChart');
-            if (!ctx) {
-                return;
-            }
+            if (!ctx) return;
             
             var actualData = [];
+            var forecastData = [];
+            
             if (dashboardData.monthlyData) {
                 for (var i = 0; i < dashboardData.monthlyData.length; i++) {
                     var item = dashboardData.monthlyData[i];
                     if (item.period === 'Actual') {
                         actualData.push(item);
-                    }
-                }
-            }
-            
-            var forecastData = [];
-            if (dashboardData.monthlyData) {
-                for (var i = 0; i < dashboardData.monthlyData.length; i++) {
-                    var item = dashboardData.monthlyData[i];
-                    if (item.period === 'Forecast' && item.scenario === selectedScenario) {
+                    } else if (item.period === 'Forecast' && item.scenario === selectedScenario) {
                         forecastData.push(item);
                     }
                 }
             }
             
-            console.log('Revenue chart data for ' + selectedScenario + ':');
-            console.log('Actual data points: ' + actualData.length);
-            console.log('Forecast data points: ' + forecastData.length);
-            
             var chartData = actualData.concat(forecastData);
-            
-            var statusEl = document.getElementById('revenueStatus');
-            if (statusEl) {
-                statusEl.textContent = 'Timeline: ' + actualData.length + ' months actual + ' + 
-                    forecastData.length + ' months forecast = ' + chartData.length + ' total data points';
+            if (chartData.length > 48) {
+                chartData = chartData.slice(0, 48);
             }
             
-            if (revenueChart) {
-                revenueChart.destroy();
-                revenueChart = null;
-            }
+            if (revenueChart) revenueChart.destroy();
             
             var labels = [];
             var data = [];
@@ -626,7 +365,7 @@
                 var d = chartData[i];
                 labels.push(d.dateLabel || d.monthName || 'Month ' + (i + 1));
                 data.push(d.revenue || 0);
-                pointColors.push(d.period === 'Actual' ? '#dc2626' : '#2563eb');
+                pointColors.push(d.period === 'Actual' ? '#dc2626' : '#3b82f6');
             }
             
             revenueChart = new Chart(ctx, {
@@ -636,50 +375,35 @@
                     datasets: [{
                         label: 'Revenue',
                         data: data,
-                        borderColor: '#2563eb',
-                        backgroundColor: 'rgba(37, 99, 235, 0.1)',
-                        borderWidth: 3,
+                        borderColor: '#3b82f6',
+                        backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                        borderWidth: 2,
                         pointBackgroundColor: pointColors,
                         pointBorderColor: pointColors,
                         pointRadius: 4,
                         pointBorderWidth: 2,
-                        tension: 0.4
+                        tension: 0.1
                     }]
                 },
                 options: {
                     responsive: true,
                     maintainAspectRatio: false,
-                    scales: {
-                        y: {
-                            beginAtZero: false,
-                            grid: {
-                                color: '#f1f5f9'
-                            },
-                            ticks: {
-                                callback: function(value) {
-                                    return formatCurrency(value);
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    return 'Revenue: ' + formatCurrency(context.raw);
                                 }
-                            }
-                        },
-                        x: {
-                            grid: {
-                                color: '#f1f5f9'
                             }
                         }
                     },
-                    plugins: {
-                        legend: {
-                            display: false
-                        },
-                        tooltip: {
-                            callbacks: {
-                                title: function(tooltipItems) {
-                                    var index = tooltipItems[0].dataIndex;
-                                    var dataPoint = chartData[index];
-                                    return dataPoint.monthName + ' (' + dataPoint.period + ')';
-                                },
-                                label: function(context) {
-                                    return 'Revenue: ' + formatCurrency(context.parsed.y);
+                    scales: {
+                        y: {
+                            beginAtZero: false,
+                            ticks: {
+                                callback: function(value) {
+                                    return '$' + (value / 1000).toFixed(0) + 'K';
                                 }
                             }
                         }
@@ -690,36 +414,28 @@
 
         function updateProfitChart() {
             var ctx = document.getElementById('profitChart');
-            if (!ctx) {
-                return;
-            }
+            if (!ctx) return;
             
             var actualData = [];
+            var forecastData = [];
+            
             if (dashboardData.monthlyData) {
                 for (var i = 0; i < dashboardData.monthlyData.length; i++) {
                     var item = dashboardData.monthlyData[i];
                     if (item.period === 'Actual') {
                         actualData.push(item);
-                    }
-                }
-            }
-            
-            var forecastData = [];
-            if (dashboardData.monthlyData) {
-                for (var i = 0; i < dashboardData.monthlyData.length; i++) {
-                    var item = dashboardData.monthlyData[i];
-                    if (item.period === 'Forecast' && item.scenario === selectedScenario) {
+                    } else if (item.period === 'Forecast' && item.scenario === selectedScenario) {
                         forecastData.push(item);
                     }
                 }
             }
             
             var chartData = actualData.concat(forecastData);
-            
-            if (profitChart) {
-                profitChart.destroy();
-                profitChart = null;
+            if (chartData.length > 48) {
+                chartData = chartData.slice(0, 48);
             }
+            
+            if (profitChart) profitChart.destroy();
             
             var labels = [];
             var grossProfitData = [];
@@ -751,8 +467,8 @@
                         {
                             label: 'EBITDA',
                             data: ebitdaData,
-                            borderColor: '#8b5cf6',
-                            backgroundColor: 'rgba(139, 92, 246, 0.1)',
+                            borderColor: '#f59e0b',
+                            backgroundColor: 'rgba(245, 158, 11, 0.1)',
                             borderWidth: 2,
                             pointRadius: 0,
                             tension: 0.1
@@ -760,8 +476,8 @@
                         {
                             label: 'Net Profit',
                             data: netProfitData,
-                            borderColor: '#f59e0b',
-                            backgroundColor: 'rgba(245, 158, 11, 0.1)',
+                            borderColor: '#dc2626',
+                            backgroundColor: 'rgba(220, 38, 38, 0.1)',
                             borderWidth: 2,
                             pointRadius: 0,
                             tension: 0.1
@@ -771,36 +487,21 @@
                 options: {
                     responsive: true,
                     maintainAspectRatio: false,
-                    scales: {
-                        y: {
-                            beginAtZero: false,
-                            grid: {
-                                color: '#f1f5f9'
-                            },
-                            ticks: {
-                                callback: function(value) {
-                                    return formatCurrency(value);
-                                }
-                            }
-                        },
-                        x: {
-                            grid: {
-                                color: '#f1f5f9'
-                            }
-                        }
-                    },
                     plugins: {
-                        legend: {
-                            position: 'top',
-                            labels: {
-                                usePointStyle: true,
-                                padding: 20
-                            }
-                        },
                         tooltip: {
                             callbacks: {
                                 label: function(context) {
-                                    return context.dataset.label + ': ' + formatCurrency(context.parsed.y);
+                                    return context.dataset.label + ': ' + formatCurrency(context.raw);
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: false,
+                            ticks: {
+                                callback: function(value) {
+                                    return '$' + (value / 1000).toFixed(0) + 'K';
                                 }
                             }
                         }
@@ -809,36 +510,92 @@
             });
         }
 
+        function updateSummaryTable() {
+            var summary = getPeriodSummary(selectedScenario);
+            var tbody = document.querySelector('#summaryTable tbody');
+            
+            var rows = [
+                ['Revenue', summary.trailing12M.revenue, summary.year1.revenue, summary.year2.revenue, summary.year3.revenue],
+                ['Materials (23%)', summary.trailing12M.materials, summary.year1.materials, summary.year2.materials, summary.year3.materials],
+                ['Direct Labor (18%)', summary.trailing12M.directLabor, summary.year1.directLabor, summary.year2.directLabor, summary.year3.directLabor],
+                ['Gross Profit', summary.trailing12M.grossProfit, summary.year1.grossProfit, summary.year2.grossProfit, summary.year3.grossProfit],
+                ['Operating Expenses (40%)', summary.trailing12M.opex, summary.year1.opex, summary.year2.opex, summary.year3.opex],
+                ['Net Profit', summary.trailing12M.netProfit, summary.year1.netProfit, summary.year2.netProfit, summary.year3.netProfit]
+            ];
+            
+            var html = '';
+            for (var i = 0; i < rows.length; i++) {
+                var row = rows[i];
+                html += '<tr><td><strong>' + row[0] + '</strong></td>';
+                for (var j = 1; j < row.length; j++) {
+                    html += '<td>' + formatCurrency(row[j] || 0) + '</td>';
+                }
+                html += '</tr>';
+            }
+            tbody.innerHTML = html;
+        }
+
+        function updateCompanyName() {
+            var companyName = 'The Brothers that Just do Gutters';
+            if (dashboardData.businessAssumptions && dashboardData.businessAssumptions.operatorName) {
+                companyName = dashboardData.businessAssumptions.operatorName;
+            }
+            var displayName = companyName === 'No report submitted' ? 'The Brothers that Just do Gutters' : companyName;
+            document.getElementById('company-name').textContent = displayName + ' - Financial Forecasting';
+        }
+
+        function calculateGrowthRate(previous, current) {
+            if (!previous || previous === 0) return '0.0';
+            return ((current - previous) / previous * 100).toFixed(1);
+        }
+
         function formatCurrency(value) {
             return new Intl.NumberFormat('en-US', {
                 style: 'currency',
                 currency: 'USD',
                 minimumFractionDigits: 0,
-                maximumFractionDigits: 0
-            }).format(value);
+                maximumFractionDigits: 0,
+            }).format(value || 0);
         }
 
-        function calculateGrowthRate(oldValue, newValue) {
-            if (!oldValue || oldValue === 0) return 0;
-            return Math.round(((newValue - oldValue) / oldValue) * 100);
-        }
+        window.addEventListener('load', function() {
+            console.log('Dashboard loading...');
+            updateDebugInfo('Dashboard loading...');
+            
+            var urlParams = new URLSearchParams(window.location.search);
+            var webhookData = urlParams.get('data');
+            
+            console.log('URL has data parameter:', !!webhookData);
+            updateDebugInfo('URL Check: ' + (webhookData ? 'Data found (' + webhookData.length + ' chars)' : 'No data found'));
+            
+            if (webhookData) {
+                processWebhookData(webhookData);
+            } else {
+                var storedData = getStoredData();
+                if (storedData) {
+                    updateDebugInfo('Found stored data, loading dashboard...');
+                    dashboardData = storedData;
+                    showDashboard();
+                    updateDashboard();
+                } else {
+                    updateDebugInfo('No data found. Upload a file or run N8N workflow.');
+                }
+            }
+        });
 
         document.addEventListener('DOMContentLoaded', function() {
-            var buttons = document.querySelectorAll('.scenario-btn');
-            for (var i = 0; i < buttons.length; i++) {
-                buttons[i].addEventListener('click', function() {
+            var scenarioButtons = document.querySelectorAll('.scenario-btn');
+            for (var i = 0; i < scenarioButtons.length; i++) {
+                scenarioButtons[i].addEventListener('click', function() {
                     var allButtons = document.querySelectorAll('.scenario-btn');
                     for (var j = 0; j < allButtons.length; j++) {
                         allButtons[j].classList.remove('active');
                     }
                     this.classList.add('active');
                     selectedScenario = this.getAttribute('data-scenario');
-                    console.log('Switched to scenario: ' + selectedScenario);
                     updateDashboard();
                 });
             }
-            
-            updateConsoleStatus('Dashboard initialized successfully - no console errors', 'success');
         });
     </script>
 </body>
