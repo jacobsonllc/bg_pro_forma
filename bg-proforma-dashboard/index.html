@@ -562,24 +562,22 @@
             console.log('Dashboard loading...');
             updateDebugInfo('Dashboard loading...');
             
+            // Check for URL parameters
             var urlParams = new URLSearchParams(window.location.search);
             var webhookData = urlParams.get('data');
             
+            console.log('Full URL:', window.location.href);
             console.log('URL has data parameter:', !!webhookData);
-            updateDebugInfo('URL Check: ' + (webhookData ? 'Data found (' + webhookData.length + ' chars)' : 'No data found'));
+            console.log('All URL params:', Array.from(urlParams.entries()));
             
             if (webhookData) {
+                console.log('Raw webhook data length:', webhookData.length);
+                console.log('Raw webhook data preview:', webhookData.substring(0, 200) + '...');
+                updateDebugInfo('🔍 Data found (' + webhookData.length + ' chars) - Processing...');
                 processWebhookData(webhookData);
             } else {
-                var storedData = getStoredData();
-                if (storedData) {
-                    updateDebugInfo('Found stored data, loading dashboard...');
-                    dashboardData = storedData;
-                    showDashboard();
-                    updateDashboard();
-                } else {
-                    updateDebugInfo('No data found. Upload a file or run N8N workflow.');
-                }
+                updateDebugInfo('❌ No data parameter found in URL. Run N8N workflow or upload file.');
+                console.log('Expected URL format: ' + window.location.origin + window.location.pathname + '?data=...');
             }
         });
 
