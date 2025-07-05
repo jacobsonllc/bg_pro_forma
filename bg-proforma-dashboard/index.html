@@ -585,9 +585,7 @@
                 updateDebugInfo('🔍 Data found - Processing...');
                 processWebhookData(dataToProcess);
             } else {
-                // Try fetching from OneDrive
-                updateDebugInfo('🔍 Checking OneDrive for stored data...');
-                fetchFromOneDrive();
+                updateDebugInfo('❌ No data parameter found in URL or POST. Run N8N workflow or upload file.');
             }
         });
 
