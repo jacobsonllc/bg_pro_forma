@@ -6,309 +6,52 @@
     <title>Pro Forma Financial Dashboard</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-        
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            background-color: #f8fafc;
-            color: #1f2937;
-        }
-        
-        .header {
-            background: white;
-            border-bottom: 1px solid #e5e7eb;
-            padding: 1.5rem 0;
-        }
-        
-        .container {
-            width: 100%;
-            padding: 0 1rem;
-        }
-        
-        .header-content {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            flex-wrap: wrap;
-            gap: 1rem;
-        }
-        
-        .header-info h1 {
-            font-size: 2rem;
-            font-weight: bold;
-            color: #1f2937;
-            margin-bottom: 0.25rem;
-        }
-        
-        .header-info p {
-            color: #6b7280;
-        }
-        
-        .data-freshness {
-            margin-top: 0.5rem;
-            font-size: 0.875rem;
-            color: #6b7280;
-            display: flex;
-            gap: 1rem;
-            align-items: center;
-            flex-wrap: wrap;
-        }
-
-        .data-source-badge {
-            background: #10b981;
-            color: white;
-            padding: 0.25rem 0.75rem;
-            border-radius: 1rem;
-            font-size: 0.75rem;
-            font-weight: 500;
-        }
-
-        .data-source-badge.automated {
-            background: #3b82f6;
-        }
-
-        .data-source-badge.stale {
-            background: #f59e0b;
-        }
-
-        .data-source-badge.error {
-            background: #ef4444;
-        }
-        
-        .upload-btn {
-            background: #3b82f6;
-            color: white;
-            padding: 0.75rem 1.5rem;
-            border: none;
-            border-radius: 0.5rem;
-            cursor: pointer;
-            font-weight: 500;
-            transition: background 0.2s;
-        }
-        
-        .upload-btn:hover {
-            background: #2563eb;
-        }
-        
-        .hidden {
-            display: none;
-        }
-        
-        .main-content {
-            padding: 2rem 0;
-        }
-        
-        .upload-area {
-            background: white;
-            border: 2px dashed #d1d5db;
-            border-radius: 0.75rem;
-            padding: 3rem;
-            text-align: center;
-            margin-bottom: 2rem;
-            transition: border-color 0.2s, background-color 0.2s;
-        }
-        
-        .debug-info {
-            background: #f0f9ff;
-            border: 1px solid #0284c7;
-            padding: 1rem;
-            border-radius: 0.5rem;
-            margin-bottom: 1rem;
-            font-family: monospace;
-            font-size: 0.875rem;
-        }
-        
-        .scenario-selector {
-            background: white;
-            border-radius: 0.75rem;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-            padding: 1.5rem;
-            margin-bottom: 1.5rem;
-        }
-        
-        .scenario-selector h3 {
-            font-size: 1.25rem;
-            margin-bottom: 1rem;
-            color: #1f2937;
-        }
-        
-        .scenario-buttons {
-            display: flex;
-            gap: 1rem;
-            flex-wrap: wrap;
-        }
-        
-        .scenario-btn {
-            padding: 0.75rem 1.5rem;
-            border: none;
-            border-radius: 0.5rem;
-            cursor: pointer;
-            font-weight: 500;
-            transition: all 0.2s;
-            background: #f3f4f6;
-            color: #374151;
-        }
-        
-        .scenario-btn.active {
-            background: #3b82f6;
-            color: white;
-        }
-        
-        .metrics-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-            gap: 1.5rem;
-            margin-bottom: 2rem;
-        }
-        
-        .metric-card {
-            background: white;
-            border-radius: 0.75rem;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-            padding: 1.5rem;
-        }
-        
-        .metric-header {
-            display: flex;
-            align-items: center;
-            margin-bottom: 1rem;
-        }
-        
-        .metric-icon {
-            width: 2.5rem;
-            height: 2.5rem;
-            border-radius: 0.5rem;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            margin-right: 1rem;
-            font-size: 1.25rem;
-        }
-        
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background-color: #f8fafc; color: #1f2937; }
+        .header { background: white; border-bottom: 1px solid #e5e7eb; padding: 1.5rem 0; }
+        .container { width: 100%; padding: 0 1rem; }
+        .header-content { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem; }
+        .header-info h1 { font-size: 2rem; font-weight: bold; color: #1f2937; margin-bottom: 0.25rem; }
+        .header-info p { color: #6b7280; }
+        .data-freshness { margin-top: 0.5rem; font-size: 0.875rem; color: #6b7280; display: flex; gap: 1rem; align-items: center; flex-wrap: wrap; }
+        .data-source-badge { background: #10b981; color: white; padding: 0.25rem 0.75rem; border-radius: 1rem; font-size: 0.75rem; font-weight: 500; }
+        .data-source-badge.automated { background: #3b82f6; }
+        .data-source-badge.error { background: #ef4444; }
+        .upload-btn { background: #3b82f6; color: white; padding: 0.75rem 1.5rem; border: none; border-radius: 0.5rem; cursor: pointer; font-weight: 500; transition: background 0.2s; }
+        .upload-btn:hover { background: #2563eb; }
+        .hidden { display: none; }
+        .main-content { padding: 2rem 0; }
+        .upload-area { background: white; border: 2px dashed #d1d5db; border-radius: 0.75rem; padding: 3rem; text-align: center; margin-bottom: 2rem; }
+        .debug-info { background: #f0f9ff; border: 1px solid #0284c7; padding: 1rem; border-radius: 0.5rem; margin-bottom: 1rem; font-family: monospace; font-size: 0.875rem; }
+        .scenario-selector { background: white; border-radius: 0.75rem; box-shadow: 0 1px 3px rgba(0,0,0,0.1); padding: 1.5rem; margin-bottom: 1.5rem; }
+        .scenario-selector h3 { font-size: 1.25rem; margin-bottom: 1rem; color: #1f2937; }
+        .scenario-buttons { display: flex; gap: 1rem; flex-wrap: wrap; }
+        .scenario-btn { padding: 0.75rem 1.5rem; border: none; border-radius: 0.5rem; cursor: pointer; font-weight: 500; transition: all 0.2s; background: #f3f4f6; color: #374151; }
+        .scenario-btn.active { background: #3b82f6; color: white; }
+        .metrics-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1.5rem; margin-bottom: 2rem; }
+        .metric-card { background: white; border-radius: 0.75rem; box-shadow: 0 1px 3px rgba(0,0,0,0.1); padding: 1.5rem; }
+        .metric-header { display: flex; align-items: center; margin-bottom: 1rem; }
+        .metric-icon { width: 2.5rem; height: 2.5rem; border-radius: 0.5rem; display: flex; align-items: center; justify-content: center; margin-right: 1rem; font-size: 1.25rem; }
         .metric-icon.blue { background: #dbeafe; color: #3b82f6; }
         .metric-icon.green { background: #d1fae5; color: #10b981; }
         .metric-icon.purple { background: #e9d5ff; color: #8b5cf6; }
         .metric-icon.orange { background: #fed7aa; color: #f97316; }
-        
-        .metric-info h4 {
-            font-size: 0.875rem;
-            color: #6b7280;
-            margin-bottom: 0.25rem;
-        }
-        
-        .metric-value {
-            font-size: 2rem;
-            font-weight: bold;
-            color: #1f2937;
-        }
-        
-        .metric-growth {
-            font-size: 0.875rem;
-            margin-top: 0.25rem;
-        }
-        
+        .metric-info h4 { font-size: 0.875rem; color: #6b7280; margin-bottom: 0.25rem; }
+        .metric-value { font-size: 2rem; font-weight: bold; color: #1f2937; }
+        .metric-growth { font-size: 0.875rem; margin-top: 0.25rem; }
         .metric-growth.positive { color: #10b981; }
-        .metric-growth.negative { color: #ef4444; }
-        
-        .charts-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 2rem;
-            margin-bottom: 2rem;
-        }
-        
-        @media (max-width: 1024px) {
-            .charts-grid {
-                grid-template-columns: 1fr;
-            }
-        }
-        
-        .chart-card {
-            background: white;
-            border-radius: 0.75rem;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-            padding: 1.5rem;
-        }
-        
-        .chart-card h3 {
-            font-size: 1.125rem;
-            margin-bottom: 1rem;
-            color: #1f2937;
-        }
-        
-        .chart-container {
-            height: 300px;
-            position: relative;
-        }
-        
-        .summary-table {
-            background: white;
-            border-radius: 0.75rem;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-            padding: 1.5rem;
-            overflow-x: auto;
-        }
-        
-        .summary-table h3 {
-            margin-bottom: 1rem;
-            color: #1f2937;
-        }
-        
-        table {
-            width: 100%;
-            border-collapse: collapse;
-        }
-        
-        th, td {
-            padding: 0.75rem;
-            text-align: right;
-            border-bottom: 1px solid #e5e7eb;
-        }
-        
-        th:first-child, td:first-child {
-            text-align: left;
-        }
-        
-        th {
-            background: #f9fafb;
-            font-weight: 600;
-            color: #374151;
-            font-size: 0.875rem;
-            text-transform: uppercase;
-        }
-        
-        .error-message {
-            background: #fef2f2;
-            border: 1px solid #fecaca;
-            color: #dc2626;
-            padding: 1rem;
-            border-radius: 0.5rem;
-            margin-bottom: 1rem;
-        }
-        
-        .loading {
-            text-align: center;
-            padding: 2rem;
-        }
-        
-        .spinner {
-            width: 2rem;
-            height: 2rem;
-            border: 3px solid #e5e7eb;
-            border-top: 3px solid #3b82f6;
-            border-radius: 50%;
-            margin: 0 auto 1rem;
-            animation: spin 1s linear infinite;
-        }
-        
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
+        .charts-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; margin-bottom: 2rem; }
+        .chart-card { background: white; border-radius: 0.75rem; box-shadow: 0 1px 3px rgba(0,0,0,0.1); padding: 1.5rem; }
+        .chart-card h3 { font-size: 1.125rem; margin-bottom: 1rem; color: #1f2937; }
+        .chart-container { height: 300px; position: relative; }
+        .summary-table { background: white; border-radius: 0.75rem; box-shadow: 0 1px 3px rgba(0,0,0,0.1); padding: 1.5rem; overflow-x: auto; }
+        .summary-table h3 { margin-bottom: 1rem; color: #1f2937; }
+        table { width: 100%; border-collapse: collapse; }
+        th, td { padding: 0.75rem; text-align: right; border-bottom: 1px solid #e5e7eb; }
+        th:first-child, td:first-child { text-align: left; }
+        th { background: #f9fafb; font-weight: 600; color: #374151; font-size: 0.875rem; text-transform: uppercase; }
+        .error-message { background: #fef2f2; border: 1px solid #fecaca; color: #dc2626; padding: 1rem; border-radius: 0.5rem; margin-bottom: 1rem; }
+        @media (max-width: 1024px) { .charts-grid { grid-template-columns: 1fr; } }
     </style>
 </head>
 <body>
@@ -323,9 +66,7 @@
                         <span id="data-source" class="data-source-badge">Manual Upload</span>
                     </div>
                 </div>
-                <button class="upload-btn" onclick="document.getElementById('fileInput').click()">
-                    📁 Upload New Data
-                </button>
+                <button class="upload-btn" onclick="document.getElementById('fileInput').click()">📁 Upload New Data</button>
                 <input type="file" id="fileInput" class="hidden" accept=".json" onchange="handleFileUpload(event)">
             </div>
         </div>
@@ -335,23 +76,13 @@
         <div class="container">
             <div id="debugInfo" class="debug-info">
                 <strong>🔍 Debug Info:</strong><br>
-                <span id="debugText">Loading...</span>
+                <span id="debugText">Starting...</span>
             </div>
 
             <div id="uploadArea" class="upload-area">
                 <h2>Upload Your Pro Forma Data</h2>
                 <p>Drag and drop your JSON file here, or click the button below to browse</p>
-                <button class="upload-btn" onclick="document.getElementById('fileInput').click()">
-                    Choose File
-                </button>
-                <p style="margin-top: 1rem; font-size: 0.875rem; color: #6b7280;">
-                    💡 <strong>For automated updates:</strong> This dashboard receives data automatically from your N8N workflow via URL parameters.
-                </p>
-            </div>
-
-            <div id="loadingState" class="loading hidden">
-                <div class="spinner"></div>
-                <p>Processing your data...</p>
+                <button class="upload-btn" onclick="document.getElementById('fileInput').click()">Choose File</button>
             </div>
 
             <div id="errorMessage" class="error-message hidden"></div>
@@ -376,7 +107,6 @@
                             </div>
                         </div>
                     </div>
-                    
                     <div class="metric-card">
                         <div class="metric-header">
                             <div class="metric-icon green">💰</div>
@@ -387,7 +117,6 @@
                             </div>
                         </div>
                     </div>
-                    
                     <div class="metric-card">
                         <div class="metric-header">
                             <div class="metric-icon purple">📊</div>
@@ -398,7 +127,6 @@
                             </div>
                         </div>
                     </div>
-                    
                     <div class="metric-card">
                         <div class="metric-header">
                             <div class="metric-icon orange">🎯</div>
@@ -413,12 +141,11 @@
 
                 <div class="charts-grid">
                     <div class="chart-card">
-                        <h3>Revenue Trend - <span id="chartScenario">Base Case</span> <small>(Actual + Forecast)</small></h3>
+                        <h3>Revenue Trend - <span id="chartScenario">Base Case</span></h3>
                         <div class="chart-container">
                             <canvas id="revenueChart"></canvas>
                         </div>
                     </div>
-                    
                     <div class="chart-card">
                         <h3>Profitability Analysis</h3>
                         <div class="chart-container">
@@ -431,16 +158,9 @@
                     <h3>Financial Summary by Period</h3>
                     <table id="summaryTable">
                         <thead>
-                            <tr>
-                                <th>Metric</th>
-                                <th>Trailing 12M</th>
-                                <th>Year 1</th>
-                                <th>Year 2</th>
-                                <th>Year 3</th>
-                            </tr>
+                            <tr><th>Metric</th><th>Trailing 12M</th><th>Year 1</th><th>Year 2</th><th>Year 3</th></tr>
                         </thead>
-                        <tbody>
-                        </tbody>
+                        <tbody></tbody>
                     </table>
                 </div>
             </div>
@@ -453,45 +173,30 @@
         let revenueChart = null;
         let profitChart = null;
 
-        // Debug function
         function updateDebugInfo(message) {
             document.getElementById('debugText').innerHTML = message;
         }
 
-        // Auto-load data on page load
-        window.addEventListener('load', () => {
-            console.log('🚀 Dashboard loading...');
+        window.addEventListener('load', function() {
+            console.log('Dashboard loading...');
             updateDebugInfo('Dashboard loading...');
             
-            // Check URL parameters
-            const fullUrl = window.location.href;
             const urlParams = new URLSearchParams(window.location.search);
             const webhookData = urlParams.get('data');
             
-            console.log('🔍 Full URL:', fullUrl);
-            console.log('🔍 URL has data parameter:', !!webhookData);
-            
-            updateDebugInfo(`
-                URL Check:<br>
-                • Has data parameter: ${!!webhookData ? 'YES' : 'NO'}<br>
-                • Data length: ${webhookData ? webhookData.length : 0} chars<br>
-                • Processing...
-            `);
+            console.log('URL has data parameter:', !!webhookData);
+            updateDebugInfo('URL Check: ' + (webhookData ? 'Data found (' + webhookData.length + ' chars)' : 'No data found'));
             
             if (webhookData) {
-                console.log('📊 Found data in URL, processing...');
                 processWebhookData(webhookData);
             } else {
-                console.log('💾 No URL data, checking localStorage...');
                 const storedData = getStoredData();
                 if (storedData) {
-                    console.log('✅ Found stored data');
                     updateDebugInfo('Found stored data, loading dashboard...');
                     dashboardData = storedData;
                     showDashboard();
                     updateDashboard();
                 } else {
-                    console.log('❌ No data found anywhere');
                     updateDebugInfo('No data found. Upload a file or run N8N workflow.');
                 }
             }
@@ -500,76 +205,53 @@
         function processWebhookData(webhookData) {
             try {
                 updateDebugInfo('Decoding URL data...');
-                console.log('🔄 Decoding webhook data...');
+                console.log('Decoding webhook data...');
                 
                 const decodedData = JSON.parse(decodeURIComponent(webhookData));
-                console.log('✅ Successfully decoded webhook data');
-                console.log('📋 Decoded data keys:', Object.keys(decodedData));
+                console.log('Successfully decoded webhook data');
                 
-                let processedData;
-                if (Array.isArray(decodedData) && decodedData.length > 0) {
-                    processedData = decodedData[0];
-                } else {
-                    processedData = decodedData;
-                }
-                
-                console.log('📊 Processed data keys:', Object.keys(processedData));
+                let processedData = Array.isArray(decodedData) ? decodedData[0] : decodedData;
                 
                 if (processedData.monthlyData && processedData.periodSummaries) {
-                    console.log('✅ Valid data structure found');
-                    updateDebugInfo(`
-                        ✅ Data loaded successfully!<br>
-                        • Monthly records: ${processedData.monthlyData.length}<br>
-                        • Period summaries: ${processedData.periodSummaries.length}<br>
-                        • Source: N8N Automation
-                    `);
+                    console.log('Valid data structure found');
+                    updateDebugInfo('✅ Data loaded successfully! Monthly records: ' + processedData.monthlyData.length + ' | Period summaries: ' + processedData.periodSummaries.length);
                     
                     storeData(processedData);
                     dashboardData = processedData;
                     showDashboard();
                     updateDashboard();
                 } else {
-                    console.error('❌ Invalid data structure');
-                    updateDebugInfo(`
-                        ❌ Invalid data structure<br>
-                        • Has monthlyData: ${!!processedData.monthlyData}<br>
-                        • Has periodSummaries: ${!!processedData.periodSummaries}<br>
-                        • Available keys: ${Object.keys(processedData).join(', ')}
-                    `);
+                    console.error('Invalid data structure');
+                    updateDebugInfo('❌ Invalid data structure. Missing monthlyData or periodSummaries.');
                     showError('Invalid data structure received from automation');
                 }
             } catch (error) {
-                console.error('❌ Error processing webhook data:', error);
-                updateDebugInfo(`❌ Error: ${error.message}`);
+                console.error('Error processing webhook data:', error);
+                updateDebugInfo('❌ Error: ' + error.message);
                 showError('Error processing automated data: ' + error.message);
             }
         }
 
-        // Store data in localStorage
         function storeData(data) {
             try {
                 localStorage.setItem('proforma_data', JSON.stringify(data));
                 localStorage.setItem('proforma_timestamp', Date.now().toString());
-                console.log('💾 Data stored successfully');
+                console.log('Data stored successfully');
             } catch (error) {
-                console.error('❌ Error storing data:', error);
+                console.error('Error storing data:', error);
             }
         }
 
-        // Get stored data
         function getStoredData() {
             try {
                 const storedData = localStorage.getItem('proforma_data');
-                if (storedData) {
-                    return JSON.parse(storedData);
-                }
+                return storedData ? JSON.parse(storedData) : null;
             } catch (error) {
-                console.error('❌ Error retrieving stored data:', error);
+                console.error('Error retrieving stored data:', error);
+                return null;
             }
-            return null;
         }
 
-        // Data freshness display
         function updateDataFreshness() {
             const timestamp = localStorage.getItem('proforma_timestamp');
             const timestampDisplay = document.getElementById('timestamp-display');
@@ -577,22 +259,14 @@
             
             if (timestamp) {
                 const date = new Date(parseInt(timestamp));
-                const now = new Date();
-                const minutesAgo = Math.floor((now - date) / (1000 * 60));
+                const minutesAgo = Math.floor((Date.now() - date) / (1000 * 60));
                 
-                let displayText;
-                if (minutesAgo < 1) {
-                    displayText = 'Just now';
-                } else if (minutesAgo < 60) {
-                    displayText = `${minutesAgo} minutes ago`;
-                } else {
-                    const hoursAgo = Math.floor(minutesAgo / 60);
-                    displayText = `${hoursAgo} hours ago`;
-                }
+                let displayText = minutesAgo < 1 ? 'Just now' : 
+                                 minutesAgo < 60 ? minutesAgo + ' minutes ago' : 
+                                 Math.floor(minutesAgo / 60) + ' hours ago';
                 
                 timestampDisplay.textContent = displayText;
                 
-                // Check if data came from automation
                 const isAutomated = dashboardData?.dataSource?.includes('automated');
                 if (isAutomated) {
                     dataSourceBadge.textContent = 'N8N Automated';
@@ -610,28 +284,18 @@
 
         function handleFileUpload(event) {
             const file = event.target.files[0];
-            if (!file) return;
+            if (!file || !file.name.endsWith('.json')) {
+                showError('Please upload a JSON file.');
+                return;
+            }
             processFile(file);
         }
 
         async function processFile(file) {
-            if (!file.name.endsWith('.json')) {
-                showError('Please upload a JSON file.');
-                return;
-            }
-
-            showLoading();
-
             try {
                 const text = await file.text();
                 const jsonData = JSON.parse(text);
-                
-                let processedData;
-                if (Array.isArray(jsonData) && jsonData.length > 0) {
-                    processedData = jsonData[0];
-                } else {
-                    processedData = jsonData;
-                }
+                let processedData = Array.isArray(jsonData) ? jsonData[0] : jsonData;
                 
                 if (!processedData.monthlyData || !processedData.periodSummaries) {
                     throw new Error('Invalid data structure. Missing monthlyData or periodSummaries.');
@@ -639,31 +303,16 @@
                 
                 storeData(processedData);
                 dashboardData = processedData;
-                hideLoading();
                 showDashboard();
                 updateDashboard();
-                
             } catch (error) {
-                hideLoading();
                 showError('Error reading file: ' + error.message);
             }
         }
 
-        function showLoading() {
-            document.getElementById('uploadArea').classList.add('hidden');
-            document.getElementById('dashboardContent').classList.add('hidden');
-            document.getElementById('errorMessage').classList.add('hidden');
-            document.getElementById('loadingState').classList.remove('hidden');
-        }
-
-        function hideLoading() {
-            document.getElementById('loadingState').classList.add('hidden');
-        }
-
         function showError(message) {
-            const errorEl = document.getElementById('errorMessage');
-            errorEl.textContent = message;
-            errorEl.classList.remove('hidden');
+            document.getElementById('errorMessage').textContent = message;
+            document.getElementById('errorMessage').classList.remove('hidden');
         }
 
         function showDashboard() {
@@ -673,11 +322,11 @@
             document.getElementById('dashboardContent').classList.remove('hidden');
         }
 
-        document.addEventListener('DOMContentLoaded', () => {
+        document.addEventListener('DOMContentLoaded', function() {
             const scenarioButtons = document.querySelectorAll('.scenario-btn');
-            scenarioButtons.forEach(btn => {
-                btn.addEventListener('click', () => {
-                    scenarioButtons.forEach(b => b.classList.remove('active'));
+            scenarioButtons.forEach(function(btn) {
+                btn.addEventListener('click', function() {
+                    scenarioButtons.forEach(function(b) { b.classList.remove('active'); });
                     btn.classList.add('active');
                     selectedScenario = btn.dataset.scenario;
                     updateDashboard();
@@ -687,23 +336,21 @@
 
         function updateDashboard() {
             if (!dashboardData) return;
-
             try {
                 updateMetrics();
                 updateCharts();
                 updateSummaryTable();
                 updateCompanyName();
                 updateDataFreshness();
-                console.log('✅ Dashboard updated successfully');
+                console.log('Dashboard updated successfully');
             } catch (error) {
-                console.error('❌ Error updating dashboard:', error);
+                console.error('Error updating dashboard:', error);
                 showError('Error updating dashboard: ' + error.message);
             }
         }
 
         function updateMetrics() {
             const summary = getPeriodSummary(selectedScenario);
-            
             document.getElementById('trailing12M').textContent = formatCurrency(summary.trailing12M?.revenue || 0);
             document.getElementById('year1Revenue').textContent = formatCurrency(summary.year1?.revenue || 0);
             document.getElementById('year1Profit').textContent = formatCurrency(summary.year1?.netProfit || 0);
@@ -712,39 +359,25 @@
             const revenueGrowth = calculateGrowthRate(summary.trailing12M?.revenue, summary.year1?.revenue);
             const profitGrowth = calculateGrowthRate(summary.trailing12M?.netProfit, summary.year1?.netProfit);
             
-            document.getElementById('year1Growth').textContent = `+${revenueGrowth}% growth`;
-            document.getElementById('profitGrowth').textContent = `+${profitGrowth}% growth`;
+            document.getElementById('year1Growth').textContent = '+' + revenueGrowth + '% growth';
+            document.getElementById('profitGrowth').textContent = '+' + profitGrowth + '% growth';
             document.getElementById('chartScenario').textContent = selectedScenario;
         }
 
         function getPeriodSummary(scenario) {
             const summaries = dashboardData.periodSummaries || [];
-            
-            const trailing12M = summaries.find(s => 
-                s.period === 'Trailing 12M' && s.scenario === scenario
-            ) || {};
-            
-            const year1 = summaries.find(s => 
-                s.period === 'Year 1' && s.scenario === scenario
-            ) || {};
-            
-            const year2 = summaries.find(s => 
-                s.period === 'Year 2' && s.scenario === scenario
-            ) || {};
-            
-            const year3 = summaries.find(s => 
-                s.period === 'Year 3' && s.scenario === scenario
-            ) || {};
-            
-            return { trailing12M, year1, year2, year3 };
+            return {
+                trailing12M: summaries.find(function(s) { return s.period === 'Trailing 12M' && s.scenario === scenario; }) || {},
+                year1: summaries.find(function(s) { return s.period === 'Year 1' && s.scenario === scenario; }) || {},
+                year2: summaries.find(function(s) { return s.period === 'Year 2' && s.scenario === scenario; }) || {},
+                year3: summaries.find(function(s) { return s.period === 'Year 3' && s.scenario === scenario; }) || {}
+            };
         }
 
         function updateCharts() {
             if (typeof Chart !== 'undefined') {
                 updateRevenueChart();
                 updateProfitChart();
-            } else {
-                setTimeout(updateCharts, 100);
             }
         }
 
@@ -752,26 +385,22 @@
             const ctx = document.getElementById('revenueChart');
             if (!ctx) return;
             
-            const actualData = getActualHistory();
-            const forecastData = getScenarioForecast(selectedScenario);
-            const chartData = [...actualData, ...forecastData].slice(0, 36);
+            const actualData = dashboardData.monthlyData?.filter(function(item) { return item.period === 'Actual'; }) || [];
+            const forecastData = dashboardData.monthlyData?.filter(function(item) { return item.period === 'Forecast' && item.scenario === selectedScenario; }) || [];
+            const chartData = actualData.concat(forecastData).slice(0, 36);
             
-            if (revenueChart) {
-                revenueChart.destroy();
-            }
+            if (revenueChart) revenueChart.destroy();
             
             revenueChart = new Chart(ctx, {
                 type: 'line',
                 data: {
-                    labels: chartData.map(d => d.dateLabel || 'Unknown'),
+                    labels: chartData.map(function(d) { return d.dateLabel || 'Unknown'; }),
                     datasets: [{
                         label: 'Revenue',
-                        data: chartData.map(d => d.revenue || 0),
+                        data: chartData.map(function(d) { return d.revenue || 0; }),
                         borderColor: '#3b82f6',
                         backgroundColor: 'rgba(59, 130, 246, 0.1)',
                         borderWidth: 3,
-                        pointBackgroundColor: chartData.map(d => d.period === 'Actual' ? '#dc2626' : '#3b82f6'),
-                        pointBorderColor: chartData.map(d => d.period === 'Actual' ? '#dc2626' : '#3b82f6'),
                         pointRadius: 4,
                         tension: 0.1
                     }]
@@ -779,18 +408,7 @@
                 options: {
                     responsive: true,
                     maintainAspectRatio: false,
-                    plugins: {
-                        legend: {
-                            display: false
-                        },
-                        tooltip: {
-                            callbacks: {
-                                label: function(context) {
-                                    return 'Revenue: ' + formatCurrency(context.raw);
-                                }
-                            }
-                        }
-                    },
+                    plugins: { legend: { display: false } },
                     scales: {
                         y: {
                             beginAtZero: false,
@@ -809,42 +427,29 @@
             const ctx = document.getElementById('profitChart');
             if (!ctx) return;
             
-            const actualData = getActualHistory();
-            const forecastData = getScenarioForecast(selectedScenario);
-            const chartData = [...actualData, ...forecastData].slice(0, 36);
+            const actualData = dashboardData.monthlyData?.filter(function(item) { return item.period === 'Actual'; }) || [];
+            const forecastData = dashboardData.monthlyData?.filter(function(item) { return item.period === 'Forecast' && item.scenario === selectedScenario; }) || [];
+            const chartData = actualData.concat(forecastData).slice(0, 36);
             
-            if (profitChart) {
-                profitChart.destroy();
-            }
+            if (profitChart) profitChart.destroy();
             
             profitChart = new Chart(ctx, {
                 type: 'line',
                 data: {
-                    labels: chartData.map(d => d.dateLabel || 'Unknown'),
+                    labels: chartData.map(function(d) { return d.dateLabel || 'Unknown'; }),
                     datasets: [
                         {
                             label: 'Gross Profit',
-                            data: chartData.map(d => d.grossProfit || 0),
+                            data: chartData.map(function(d) { return d.grossProfit || 0; }),
                             borderColor: '#10b981',
-                            backgroundColor: 'rgba(16, 185, 129, 0.1)',
-                            borderWidth: 2,
-                            pointRadius: 0,
-                            tension: 0.1
-                        },
-                        {
-                            label: 'EBITDA',
-                            data: chartData.map(d => d.ebitda || 0),
-                            borderColor: '#f59e0b',
-                            backgroundColor: 'rgba(245, 158, 11, 0.1)',
                             borderWidth: 2,
                             pointRadius: 0,
                             tension: 0.1
                         },
                         {
                             label: 'Net Profit',
-                            data: chartData.map(d => d.netProfit || 0),
+                            data: chartData.map(function(d) { return d.netProfit || 0; }),
                             borderColor: '#dc2626',
-                            backgroundColor: 'rgba(220, 38, 38, 0.1)',
                             borderWidth: 2,
                             pointRadius: 0,
                             tension: 0.1
@@ -854,21 +459,12 @@
                 options: {
                     responsive: true,
                     maintainAspectRatio: false,
-                    plugins: {
-                        tooltip: {
-                            callbacks: {
-                                label: function(context) {
-                                    return context.dataset.label + ': ' + formatCurrency(context.raw);
-                                }
-                            }
-                        }
-                    },
                     scales: {
                         y: {
                             beginAtZero: false,
                             ticks: {
                                 callback: function(value) {
-                                    return ' + (value / 1000).toFixed(0) + 'K';
+                                    return '$' + (value / 1000).toFixed(0) + 'K';
                                 }
                             }
                         }
@@ -881,66 +477,23 @@
             const summary = getPeriodSummary(selectedScenario);
             const tbody = document.querySelector('#summaryTable tbody');
             
-            tbody.innerHTML = `
-                <tr>
-                    <td><strong>Revenue</strong></td>
-                    <td>${formatCurrency(summary.trailing12M?.revenue || 0)}</td>
-                    <td>${formatCurrency(summary.year1?.revenue || 0)}</td>
-                    <td>${formatCurrency(summary.year2?.revenue || 0)}</td>
-                    <td>${formatCurrency(summary.year3?.revenue || 0)}</td>
-                </tr>
-                <tr>
-                    <td><strong>Materials (23%)</strong></td>
-                    <td>${formatCurrency(summary.trailing12M?.materials || 0)}</td>
-                    <td>${formatCurrency(summary.year1?.materials || 0)}</td>
-                    <td>${formatCurrency(summary.year2?.materials || 0)}</td>
-                    <td>${formatCurrency(summary.year3?.materials || 0)}</td>
-                </tr>
-                <tr>
-                    <td><strong>Direct Labor (18%)</strong></td>
-                    <td>${formatCurrency(summary.trailing12M?.directLabor || 0)}</td>
-                    <td>${formatCurrency(summary.year1?.directLabor || 0)}</td>
-                    <td>${formatCurrency(summary.year2?.directLabor || 0)}</td>
-                    <td>${formatCurrency(summary.year3?.directLabor || 0)}</td>
-                </tr>
-                <tr>
-                    <td><strong>Gross Profit</strong></td>
-                    <td>${formatCurrency(summary.trailing12M?.grossProfit || 0)}</td>
-                    <td>${formatCurrency(summary.year1?.grossProfit || 0)}</td>
-                    <td>${formatCurrency(summary.year2?.grossProfit || 0)}</td>
-                    <td>${formatCurrency(summary.year3?.grossProfit || 0)}</td>
-                </tr>
-                <tr>
-                    <td><strong>Operating Expenses (40%)</strong></td>
-                    <td>${formatCurrency(summary.trailing12M?.opex || 0)}</td>
-                    <td>${formatCurrency(summary.year1?.opex || 0)}</td>
-                    <td>${formatCurrency(summary.year2?.opex || 0)}</td>
-                    <td>${formatCurrency(summary.year3?.opex || 0)}</td>
-                </tr>
-                <tr>
-                    <td><strong>Net Profit</strong></td>
-                    <td>${formatCurrency(summary.trailing12M?.netProfit || 0)}</td>
-                    <td>${formatCurrency(summary.year1?.netProfit || 0)}</td>
-                    <td>${formatCurrency(summary.year2?.netProfit || 0)}</td>
-                    <td>${formatCurrency(summary.year3?.netProfit || 0)}</td>
-                </tr>
-            `;
+            tbody.innerHTML = [
+                ['Revenue', summary.trailing12M?.revenue, summary.year1?.revenue, summary.year2?.revenue, summary.year3?.revenue],
+                ['Materials (23%)', summary.trailing12M?.materials, summary.year1?.materials, summary.year2?.materials, summary.year3?.materials],
+                ['Direct Labor (18%)', summary.trailing12M?.directLabor, summary.year1?.directLabor, summary.year2?.directLabor, summary.year3?.directLabor],
+                ['Gross Profit', summary.trailing12M?.grossProfit, summary.year1?.grossProfit, summary.year2?.grossProfit, summary.year3?.grossProfit],
+                ['Operating Expenses (40%)', summary.trailing12M?.opex, summary.year1?.opex, summary.year2?.opex, summary.year3?.opex],
+                ['Net Profit', summary.trailing12M?.netProfit, summary.year1?.netProfit, summary.year2?.netProfit, summary.year3?.netProfit]
+            ].map(function(row) {
+                return '<tr><td><strong>' + row[0] + '</strong></td>' + 
+                       row.slice(1).map(function(val) { return '<td>' + formatCurrency(val || 0) + '</td>'; }).join('') + '</tr>';
+            }).join('');
         }
 
         function updateCompanyName() {
             const companyName = dashboardData.businessAssumptions?.operatorName || 'The Brothers that Just do Gutters';
             const displayName = companyName === 'No report submitted' ? 'The Brothers that Just do Gutters' : companyName;
-            document.getElementById('company-name').textContent = `${displayName} - Financial Forecasting`;
-        }
-
-        function getActualHistory() {
-            return dashboardData.monthlyData?.filter(item => item.period === 'Actual') || [];
-        }
-
-        function getScenarioForecast(scenario) {
-            return dashboardData.monthlyData?.filter(item => 
-                item.period === 'Forecast' && item.scenario === scenario
-            ) || [];
+            document.getElementById('company-name').textContent = displayName + ' - Financial Forecasting';
         }
 
         function calculateGrowthRate(previous, current) {
