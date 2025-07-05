@@ -568,7 +568,6 @@
             // Check for POST data
             var postData = null;
             if (document.body && document.body.innerHTML.includes('name="data"')) {
-                // Handle form POST data
                 var forms = document.forms;
                 for (var i = 0; i < forms.length; i++) {
                     var formData = new FormData(forms[i]);
@@ -579,23 +578,43 @@
                 }
             }
             
-            console.log('Full URL:', window.location.href);
-            console.log('URL has data parameter:', !!webhookData);
-            console.log('POST has data:', !!postData);
-            console.log('All URL params:', Array.from(urlParams.entries()));
-            
             var dataToProcess = webhookData || postData;
             
             if (dataToProcess) {
-                console.log('Raw data length:', dataToProcess.length);
-                console.log('Raw data preview:', dataToProcess.substring(0, 200) + '...');
-                updateDebugInfo('🔍 Data found (' + dataToProcess.length + ' chars) - Processing...');
+                console.log('Raw data found:', dataToProcess.length, 'chars');
+                updateDebugInfo('🔍 Data found - Processing...');
                 processWebhookData(dataToProcess);
             } else {
-                updateDebugInfo('❌ No data parameter found in URL or POST. Run N8N workflow or upload file.');
-                console.log('Expected URL format: ' + window.location.origin + window.location.pathname + '?data=...');
+                // Try fetching from OneDrive
+                updateDebugInfo('🔍 Checking OneDrive for stored data...');
+                fetchFromOneDrive();
             }
         });
+
+        function fetchFromOneDrive() {
+            // Microsoft Graph API to read the file
+            var graphUrl = 'https://graph.microsoft.com/v1.0/me/drive/root:/pro_forma/dashboard-data.txt:/content';
+            
+            // Try public share link first (replace with your actual share link)
+            var publicUrl = 'https://jacobsonltd-my.sharepoint.com/personal/eli_jacobson_ltd/Documents/AI%20OUTPUTS/pro_forma/dashboard-data.txt';
+            
+            fetch(publicUrl)
+                .then(function(response) {
+                    if (response.ok) {
+                        return response.text();
+                    }
+                    throw new Error('OneDrive fetch failed');
+                })
+                .then(function(data) {
+                    console.log('OneDrive data retrieved');
+                    updateDebugInfo('✅ Data loaded from OneDrive storage');
+                    processWebhookData(data);
+                })
+                .catch(function(error) {
+                    console.error('OneDrive error:', error);
+                    updateDebugInfo('❌ No data found. Upload file or run N8N workflow.');
+                });
+        }
 
         document.addEventListener('DOMContentLoaded', function() {
             var scenarioButtons = document.querySelectorAll('.scenario-btn');
