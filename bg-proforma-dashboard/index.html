@@ -178,10 +178,10 @@
         function processWebhookData(webhookData) {
             try {
                 updateDebugInfo('Decoding URL data...');
-                console.log('Decoding webhook data...');
+                console.log('Raw webhook data preview:', webhookData.substring(0, 500));
                 
                 var decodedData = JSON.parse(decodeURIComponent(webhookData));
-                console.log('Successfully decoded webhook data');
+                console.log('Successfully decoded webhook data', decodedData);
                 
                 var processedData = Array.isArray(decodedData) ? decodedData[0] : decodedData;
                 
@@ -189,7 +189,6 @@
                     console.log('Valid data structure found');
                     updateDebugInfo('✅ Data loaded successfully! Monthly records: ' + processedData.monthlyData.length + ' | Period summaries: ' + processedData.periodSummaries.length);
                     
-                    storeData(processedData);
                     dashboardData = processedData;
                     showDashboard();
                     updateDashboard();
