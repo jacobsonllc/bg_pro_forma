@@ -324,6 +324,16 @@
             100% { transform: rotate(360deg); }
         }
         
+        .auto-refresh {
+            background: #eff6ff;
+            border: 1px solid #bfdbfe;
+            color: #1d4ed8;
+            padding: 0.75rem 1rem;
+            border-radius: 0.5rem;
+            margin-bottom: 1rem;
+            font-size: 0.875rem;
+        }
+        
         @media (max-width: 768px) {
             .header-content {
                 flex-direction: column;
@@ -368,12 +378,19 @@
 
     <div class="main-content">
         <div class="container">
+            <div id="autoRefreshNote" class="auto-refresh hidden">
+                💡 This dashboard automatically refreshes with the latest data from N8N. Data is loaded from URL parameters when updated.
+            </div>
+
             <div id="uploadArea" class="upload-area">
                 <h2>Upload Your Pro Forma Data</h2>
                 <p>Drag and drop your JSON file here, or click the button below to browse</p>
                 <button class="upload-btn" onclick="document.getElementById('fileInput').click()">
                     Choose File
                 </button>
+                <p style="margin-top: 1rem; font-size: 0.875rem; color: #6b7280;">
+                    💡 <strong>For automated updates:</strong> This dashboard receives data automatically from your N8N workflow via URL parameters.
+                </p>
             </div>
 
             <div id="loadingState" class="loading hidden">
@@ -482,27 +499,63 @@
 
         // Auto-load data on page load
         window.addEventListener('load', () => {
-            // First check for webhook data
-            checkForWebhookData();
+            console.log('Dashboard loading...');
             
-            // Then check for stored data
-            const storedData = getStoredData();
-            if (storedData) {
-                console.log('Loading previously stored data...');
-                dashboardData = storedData;
-                showDashboard();
-                setTimeout(() => {
+            // Check for URL parameters first
+            const urlParams = new URLSearchParams(window.location.search);
+            const webhookData = urlParams.get('data');
+            
+            if (webhookData) {
+                console.log('Found data in URL parameters');
+                document.getElementById('autoRefreshNote').classList.remove('hidden');
+                processWebhookData(webhookData);
+            } else {
+                // Check localStorage as fallback
+                const storedData = getStoredData();
+                if (storedData) {
+                    console.log('Loading stored data...');
+                    dashboardData = storedData;
+                    showDashboard();
                     updateDashboard();
-                }, 200);
+                } else {
+                    console.log('No data found - showing upload area');
+                }
             }
         });
 
-        // Store data in localStorage (persistent)
+        function processWebhookData(webhookData) {
+            try {
+                const decodedData = JSON.parse(decodeURIComponent(webhookData));
+                console.log('Decoded webhook data successfully');
+                
+                let processedData;
+                if (Array.isArray(decodedData) && decodedData.length > 0) {
+                    processedData = decodedData[0];
+                } else {
+                    processedData = decodedData;
+                }
+                
+                if (processedData.monthlyData && processedData.periodSummaries) {
+                    storeData(processedData);
+                    dashboardData = processedData;
+                    showDashboard();
+                    updateDashboard();
+                } else {
+                    console.error('Invalid data structure from webhook');
+                    showError('Invalid data structure received from automation');
+                }
+            } catch (error) {
+                console.error('Error processing webhook data:', error);
+                showError('Error processing automated data: ' + error.message);
+            }
+        }
+
+        // Store data in localStorage
         function storeData(data) {
             try {
                 localStorage.setItem('proforma_data', JSON.stringify(data));
                 localStorage.setItem('proforma_timestamp', Date.now().toString());
-                updateDataFreshness();
+                console.log('Data stored successfully');
             } catch (error) {
                 console.error('Error storing data:', error);
             }
@@ -521,41 +574,7 @@
             return null;
         }
 
-        // Check for webhook data via URL parameters
-        function checkForWebhookData() {
-            const urlParams = new URLSearchParams(window.location.search);
-            const webhookData = urlParams.get('data');
-            
-            if (webhookData) {
-                try {
-                    const decodedData = JSON.parse(decodeURIComponent(webhookData));
-                    console.log('Received webhook data from N8N');
-                    
-                    let processedData;
-                    if (Array.isArray(decodedData) && decodedData.length > 0) {
-                        processedData = decodedData[0];
-                    } else {
-                        processedData = decodedData;
-                    }
-                    
-                    if (processedData.monthlyData && processedData.periodSummaries) {
-                        storeData(processedData);
-                        dashboardData = processedData;
-                        showDashboard();
-                        setTimeout(() => {
-                            updateDashboard();
-                        }, 200);
-                        
-                        // Clear URL parameters and redirect to clean URL
-                        window.history.replaceState({}, document.title, window.location.pathname);
-                    }
-                } catch (error) {
-                    console.error('Error processing webhook data:', error);
-                }
-            }
-        }
-
-        // Data freshness display function
+        // Data freshness display
         function updateDataFreshness() {
             const timestamp = localStorage.getItem('proforma_timestamp');
             const timestampDisplay = document.getElementById('timestamp-display');
@@ -564,24 +583,21 @@
             if (timestamp) {
                 const date = new Date(parseInt(timestamp));
                 const now = new Date();
-                const hoursAgo = Math.floor((now - date) / (1000 * 60 * 60));
                 const minutesAgo = Math.floor((now - date) / (1000 * 60));
                 
-                // Format the timestamp
                 let displayText;
                 if (minutesAgo < 1) {
                     displayText = 'Just now';
                 } else if (minutesAgo < 60) {
                     displayText = `${minutesAgo} minutes ago`;
-                } else if (hoursAgo < 24) {
-                    displayText = `${hoursAgo} hours ago`;
                 } else {
-                    displayText = date.toLocaleDateString() + ' at ' + date.toLocaleTimeString();
+                    const hoursAgo = Math.floor(minutesAgo / 60);
+                    displayText = `${hoursAgo} hours ago`;
                 }
                 
                 timestampDisplay.textContent = displayText;
                 
-                // Update data source badge
+                // Check if data came from automation
                 const isAutomated = dashboardData?.dataSource?.includes('automated');
                 if (isAutomated) {
                     dataSourceBadge.textContent = 'N8N Automated';
@@ -589,12 +605,6 @@
                 } else {
                     dataSourceBadge.textContent = 'Manual Upload';
                     dataSourceBadge.className = 'data-source-badge';
-                }
-                
-                // Add staleness indicator
-                if (hoursAgo > 24) {
-                    dataSourceBadge.classList.add('stale');
-                    dataSourceBadge.textContent += ' (Stale)';
                 }
             } else {
                 timestampDisplay.textContent = 'Never';
@@ -656,15 +666,11 @@
                 dashboardData = processedData;
                 hideLoading();
                 showDashboard();
-                
-                setTimeout(() => {
-                    updateDashboard();
-                }, 200);
+                updateDashboard();
                 
             } catch (error) {
                 hideLoading();
                 showError('Error reading file: ' + error.message);
-                console.error('File processing error:', error);
             }
         }
 
@@ -814,6 +820,7 @@
                             beginAtZero: false,
                             ticks: {
                                 callback: function(value) {
+                                    return 'value) {
                                     return '$' + (value / 1000).toFixed(0) + 'K';
                                 }
                             }
@@ -885,8 +892,7 @@
                         y: {
                             beginAtZero: false,
                             ticks: {
-                                callback: function(value) {
-                                    return '$' + (value / 1000).toFixed(0) + 'K';
+                                callback: function( + (value / 1000).toFixed(0) + 'K';
                                 }
                             }
                         }
@@ -976,4 +982,76 @@
         }
     </script>
 </body>
-</html>
+</html>value) {
+                                    return '$' + (value / 1000).toFixed(0) + 'K';
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        function updateProfitChart() {
+            const ctx = document.getElementById('profitChart');
+            if (!ctx) return;
+            
+            const actualData = getActualHistory();
+            const forecastData = getScenarioForecast(selectedScenario);
+            const chartData = [...actualData, ...forecastData].slice(0, 36);
+            
+            if (profitChart) {
+                profitChart.destroy();
+            }
+            
+            profitChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: chartData.map(d => d.dateLabel || 'Unknown'),
+                    datasets: [
+                        {
+                            label: 'Gross Profit',
+                            data: chartData.map(d => d.grossProfit || 0),
+                            borderColor: '#10b981',
+                            backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                            borderWidth: 2,
+                            pointRadius: 0,
+                            tension: 0.1
+                        },
+                        {
+                            label: 'EBITDA',
+                            data: chartData.map(d => d.ebitda || 0),
+                            borderColor: '#f59e0b',
+                            backgroundColor: 'rgba(245, 158, 11, 0.1)',
+                            borderWidth: 2,
+                            pointRadius: 0,
+                            tension: 0.1
+                        },
+                        {
+                            label: 'Net Profit',
+                            data: chartData.map(d => d.netProfit || 0),
+                            borderColor: '#dc2626',
+                            backgroundColor: 'rgba(220, 38, 38, 0.1)',
+                            borderWidth: 2,
+                            pointRadius: 0,
+                            tension: 0.1
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    return context.dataset.label + ': ' + formatCurrency(context.raw);
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: false,
+                            ticks: {
+                                callback: function(
