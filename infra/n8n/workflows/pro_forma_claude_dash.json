@@ -24,6 +24,22 @@
     },
     {
       "parameters": {
+        "path": "force-refresh",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "name": "Force Refresh Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [
+        -1060,
+        80
+      ],
+      "id": "force-refresh-webhook",
+      "webhookId": "force-refresh-webhook"
+    },
+    {
+      "parameters": {
         "jsCode": "// Generate Pro Forma Forecast - UPDATED COST STRUCTURE\nconst inputData = $input.all();\n\nconsole.log(\"Input data items:\", inputData.length);\n\n// Find QB data - same logic as before\nlet qbData = null;\nfor (let i = 0; i < inputData.length; i++) {\n  const item = inputData[i];\n  if (!item || !item.json) continue;\n  \n  const data = item.json;\n  \n  if (data.qbData && data.qbData.qbData && data.qbData.qbData.monthlyRevenue) {\n    qbData = { json: data.qbData.qbData };\n    console.log(\"Found double-nested QB data\");\n    break;\n  }\n  \n  if (data.qbData && data.qbData.monthlyRevenue) {\n    qbData = { json: data.qbData };\n    console.log(\"Found nested QB data\");\n    break;\n  }\n}\n\n// Find business data\nlet businessData = inputData.find(item => \n  item.json.businessAssumptions || \n  item.json.operatorName ||\n  item.json.fleetUtilization\n);\n\n// Extract actual financial data\nlet actualRevenue = {};\nlet totalActual = 0;\nlet trailing12M = 0;\nlet monthsOfData = 0;\n\nif (qbData && qbData.json && qbData.json.monthlyRevenue) {\n  const data = qbData.json;\n  actualRevenue = data.monthlyRevenue;\n  totalActual = data.totalRevenue || 0;\n  trailing12M = data.trailing12M || data.trailing6M || data.trailing2M || 0;\n  monthsOfData = data.totalMonths || Object.keys(actualRevenue).length;\n  \n  console.log(\"✅ Found QB data:\", {\n    actualRevenue,\n    totalActual,\n    trailing12M,\n    monthsOfData\n  });\n}\n\n// Business assumptions - UPDATED COST STRUCTURE\nconst assumptions = businessData ? businessData.json.businessAssumptions || businessData.json : {};\nconst baseGrowthRate = 0.05; // 5% annual growth\n\n// NEW COST STRUCTURE PER YOUR REQUIREMENTS\nconst materialsPercent = 0.23; // 23% materials\nconst directLaborPercent = 0.18; // 18% direct labor\nconst totalCogsPercent = materialsPercent + directLaborPercent; // 41% total COGS\nconst opexPercent = 0.40; // 40% OpEx\nconst targetNetMargin = 0.12; // 12% net profit target (middle of 10-14% range)\n\nconsole.log(\"✅ Using cost structure: Materials 23%, Labor 18%, OpEx 40%, Target Net 12%\");\n\n// FIXED BASELINE CALCULATION - Don't use partial months!\nlet monthlyBaseline = 0;\nconst months = Object.keys(actualRevenue).sort();\n\nif (months.length > 0) {\n  // Exclude the current month if it's incomplete (very low revenue)\n  const fullMonths = [];\n  const currentMonth = new Date().toISOString().slice(0, 7);\n  \n  months.forEach(month => {\n    const revenue = actualRevenue[month];\n    // Skip current month if it's very low (indicates partial month)\n    if (month === currentMonth && revenue < 50000) {\n      console.log(`Skipping partial month ${month} with revenue ${revenue}`);\n      return;\n    }\n    fullMonths.push(revenue);\n  });\n  \n  if (fullMonths.length > 0) {\n    // Use average of full months\n    monthlyBaseline = fullMonths.reduce((sum, rev) => sum + rev, 0) / fullMonths.length;\n    console.log(`✅ Calculated baseline from ${fullMonths.length} full months:`, monthlyBaseline);\n  } else {\n    // Fallback to total average\n    monthlyBaseline = totalActual / months.length;\n    console.log(\"⚠️ Using total average as baseline:\", monthlyBaseline);\n  }\n} else {\n  // Ultimate fallback\n  monthlyBaseline = 150000;\n  console.log(\"❌ No actual data, using default baseline:\", monthlyBaseline);\n}\n\n// Generate monthly data for dashboard\nconst monthlyData = [];\nconst currentDate = new Date();\n\n// Add actual historical data first - EXCLUDE CURRENT PARTIAL MONTH\nconst actualMonths = Object.keys(actualRevenue).sort();\nconst currentMonthKey = new Date().toISOString().slice(0, 7);\n\nactualMonths.forEach(monthKey => {\n  // Skip current month if it looks partial (low revenue)\n  if (monthKey === currentMonthKey && actualRevenue[monthKey] < 50000) {\n    console.log(`Excluding partial month ${monthKey} from chart`);\n    return;\n  }\n  \n  const date = new Date(monthKey + '-01');\n  const monthName = date.toLocaleDateString('en-US', { month: 'short', year: 'numeric' });\n  const revenue = actualRevenue[monthKey];\n  \n  // Calculate costs with new structure\n  const materials = Math.round(revenue * materialsPercent);\n  const directLabor = Math.round(revenue * directLaborPercent);\n  const totalCogs = materials + directLabor;\n  const grossProfit = revenue - totalCogs;\n  const opex = Math.round(revenue * opexPercent);\n  const ebitda = grossProfit - opex;\n  const netProfit = ebitda; // Simplified - no other expenses for now\n  \n  monthlyData.push({\n    dateLabel: monthName,\n    month: monthKey,\n    monthName: monthName,\n    period: 'Actual',\n    scenario: 'Base Case',\n    revenue: revenue,\n    materials: materials,\n    directLabor: directLabor,\n    totalCogs: totalCogs,\n    grossProfit: grossProfit,\n    opex: opex,\n    ebitda: ebitda,\n    netProfit: netProfit,\n    operatingCF: Math.round(netProfit * 1.1), // Approx cash flow\n    // Maintain backward compatibility\n    cogs: totalCogs\n  });\n});\n\n// Generate forecast data for each scenario - START FROM NEXT FULL MONTH\nconst scenarios = [\n  { name: 'Base Case', multiplier: 1.0 },\n  { name: 'Aggressive', multiplier: 1.25 },\n  { name: 'Conservative', multiplier: 0.8 }\n];\n\nscenarios.forEach(scenario => {\n  // Start forecasting from next month (skip current partial month)\n  for (let i = 1; i <= 36; i++) {\n    const forecastDate = new Date(currentDate);\n    forecastDate.setMonth(currentDate.getMonth() + i);\n    \n    const monthKey = forecastDate.toISOString().slice(0, 7);\n    const monthName = forecastDate.toLocaleDateString('en-US', { month: 'short', year: 'numeric' });\n    \n    // Better growth calculation\n    const growthMultiplier = Math.pow(1 + baseGrowthRate, i / 12); // Annual compounding\n    \n    // Seasonal pattern for gutter business\n    const seasonalMultiplier = 1 + 0.15 * Math.sin((forecastDate.getMonth() + 1 - 2) * Math.PI / 6);\n    \n    // Calculate forecast revenue\n    const baseRevenue = monthlyBaseline * growthMultiplier * seasonalMultiplier * scenario.multiplier;\n    const revenue = Math.round(baseRevenue);\n    \n    // Calculate costs with new detailed structure\n    const materials = Math.round(revenue * materialsPercent);\n    const directLabor = Math.round(revenue * directLaborPercent);\n    const totalCogs = materials + directLabor;\n    const grossProfit = revenue - totalCogs;\n    const opex = Math.round(revenue * opexPercent);\n    const ebitda = grossProfit - opex;\n    const netProfit = ebitda;\n    \n    monthlyData.push({\n      dateLabel: monthName,\n      month: monthKey,\n      monthName: monthName,\n      period: 'Forecast',\n      scenario: scenario.name,\n      revenue: revenue,\n      materials: materials,\n      directLabor: directLabor,\n      totalCogs: totalCogs,\n      grossProfit: grossProfit,\n      opex: opex,\n      ebitda: ebitda,\n      netProfit: netProfit,\n      operatingCF: Math.round(netProfit * 1.1),\n      // Maintain backward compatibility\n      cogs: totalCogs\n    });\n  }\n});\n\n// Create period summaries\nconst periodSummaries = [];\n\nscenarios.forEach(scenario => {\n  const scenarioForecast = monthlyData.filter(m => m.period === 'Forecast' && m.scenario === scenario.name);\n  \n  // Trailing 12M (actual data)\n  periodSummaries.push({\n    period: 'Trailing 12M',\n    scenario: scenario.name,\n    revenue: trailing12M,\n    materials: Math.round(trailing12M * materialsPercent),\n    directLabor: Math.round(trailing12M * directLaborPercent),\n    totalCogs: Math.round(trailing12M * totalCogsPercent),\n    grossProfit: Math.round(trailing12M * (1 - totalCogsPercent)),\n    opex: Math.round(trailing12M * opexPercent),\n    netProfit: Math.round(trailing12M * (1 - totalCogsPercent - opexPercent)),\n    operatingCF: Math.round(trailing12M * (1 - totalCogsPercent - opexPercent) * 1.1)\n  });\n  \n  // Year 1 forecast\n  const year1Data = scenarioForecast.slice(0, 12);\n  const year1Revenue = year1Data.reduce((sum, m) => sum + m.revenue, 0);\n  periodSummaries.push({\n    period: 'Year 1',\n    scenario: scenario.name,\n    revenue: year1Revenue,\n    materials: year1Data.reduce((sum, m) => sum + m.materials, 0),\n    directLabor: year1Data.reduce((sum, m) => sum + m.directLabor, 0),\n    totalCogs: year1Data.reduce((sum, m) => sum + m.totalCogs, 0),\n    grossProfit: year1Data.reduce((sum, m) => sum + m.grossProfit, 0),\n    opex: year1Data.reduce((sum, m) => sum + m.opex, 0),\n    netProfit: year1Data.reduce((sum, m) => sum + m.netProfit, 0),\n    operatingCF: year1Data.reduce((sum, m) => sum + m.operatingCF, 0)\n  });\n  \n  // Year 2 forecast\n  const year2Data = scenarioForecast.slice(12, 24);\n  const year2Revenue = year2Data.reduce((sum, m) => sum + m.revenue, 0);\n  periodSummaries.push({\n    period: 'Year 2',\n    scenario: scenario.name,\n    revenue: year2Revenue,\n    materials: year2Data.reduce((sum, m) => sum + m.materials, 0),\n    directLabor: year2Data.reduce((sum, m) => sum + m.directLabor, 0),\n    totalCogs: year2Data.reduce((sum, m) => sum + m.totalCogs, 0),\n    grossProfit: year2Data.reduce((sum, m) => sum + m.grossProfit, 0),\n    opex: year2Data.reduce((sum, m) => sum + m.opex, 0),\n    netProfit: year2Data.reduce((sum, m) => sum + m.netProfit, 0),\n    operatingCF: year2Data.reduce((sum, m) => sum + m.operatingCF, 0)\n  });\n  \n  // Year 3 forecast\n  const year3Data = scenarioForecast.slice(24, 36);\n  const year3Revenue = year3Data.reduce((sum, m) => sum + m.revenue, 0);\n  periodSummaries.push({\n    period: 'Year 3',\n    scenario: scenario.name,\n    revenue: year3Revenue,\n    materials: year3Data.reduce((sum, m) => sum + m.materials, 0),\n    directLabor: year3Data.reduce((sum, m) => sum + m.directLabor, 0),\n    totalCogs: year3Data.reduce((sum, m) => sum + m.totalCogs, 0),\n    grossProfit: year3Data.reduce((sum, m) => sum + m.grossProfit, 0),\n    opex: year3Data.reduce((sum, m) => sum + m.opex, 0),\n    netProfit: year3Data.reduce((sum, m) => sum + m.netProfit, 0),\n    operatingCF: year3Data.reduce((sum, m) => sum + m.operatingCF, 0)\n  });\n});\n\n// Build final forecast object\nconst forecast = {\n  monthlyData: monthlyData,\n  periodSummaries: periodSummaries,\n  businessAssumptions: assumptions,\n  generatedAt: new Date().toISOString(),\n  dataSource: \"automated_forecast_updated_costs\",\n  \n  // Cost structure documentation\n  costStructure: {\n    materials: `${materialsPercent * 100}%`,\n    directLabor: `${directLaborPercent * 100}%`,\n    totalCogs: `${totalCogsPercent * 100}%`,\n    opex: `${opexPercent * 100}%`,\n    targetNetMargin: `${targetNetMargin * 100}%`\n  },\n  \n  debugInfo: {\n    baselineUsed: Math.round(monthlyBaseline),\n    excludedPartialMonth: currentMonthKey,\n    actualMonthsIncluded: monthlyData.filter(m => m.period === 'Actual').length,\n    forecastRecords: monthlyData.filter(m => m.period === 'Forecast').length\n  }\n};\n\nconsole.log(\"✅ Generated forecast with updated cost structure\");\nconsole.log(\"✅ Materials: 23%, Direct Labor: 18%, OpEx: 40%\");\nconsole.log(\"✅ Total monthly records:\", monthlyData.length);\n\nreturn [{ json: forecast }];"
       },
       "type": "n8n-nodes-base.code",
@@ -213,6 +229,25 @@
           "name": "Microsoft Drive account"
         }
       }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://dash-api.my-domain.com/api/proforma",
+        "sendBody": true,
+        "contentType": "raw",
+        "rawContentType": "json",
+        "body": "{\n  \"forecast\": {{ $json.forecast }},\n  \"csv\": {{ $json.csv }}\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1820,
+        -360
+      ],
+      "id": "send-to-dashboard-new",
+      "name": "Send to Dashboard"
     },
     {
       "parameters": {
@@ -443,53 +478,22 @@
       ],
       "id": "192505a5-64a3-4545-962b-9a4c82ec9c0e",
       "name": "Respond to Webhook"
-    },
-    {
-      "parameters": {
-        "resource": "folder",
-        "folderId": "/AI OUTPUTS/pro_forma/dashboard_url"
-      },
-      "type": "n8n-nodes-base.microsoftOneDrive",
-      "typeVersion": 1,
-      "position": [
-        2020,
-        140
-      ],
-      "id": "0700ca46-c85d-4244-9643-c12021851b1f",
-      "name": "Microsoft OneDrive",
-      "credentials": {
-        "microsoftOneDriveOAuth2Api": {
-          "id": "eCL5PdeYj6RQU8iQ",
-          "name": "Microsoft Drive account 2"
-        }
-      },
-      "disabled": true
-    },
-    {
-      "parameters": {
-        "operation": "download",
-        "fileId": "={{ $json.id }}"
-      },
-      "type": "n8n-nodes-base.microsoftOneDrive",
-      "typeVersion": 1,
-      "position": [
-        2240,
-        140
-      ],
-      "id": "34846bd8-35fa-4464-b57f-46464c10626f",
-      "name": "Microsoft OneDrive1",
-      "credentials": {
-        "microsoftOneDriveOAuth2Api": {
-          "id": "eCL5PdeYj6RQU8iQ",
-          "name": "Microsoft Drive account 2"
-        }
-      },
-      "disabled": true
     }
   ],
   "pinData": {},
   "connections": {
     "Weekly Trigger": {
+      "main": [
+        [
+          {
+            "node": "Get QB Data - Fixed1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Force Refresh Webhook": {
       "main": [
         [
           {
@@ -579,7 +583,7 @@
       "main": [
         [
           {
-            "node": "Upload Dashboard Data",
+            "node": "Send to Dashboard",
             "type": "main",
             "index": 0
           }
@@ -689,18 +693,7 @@
         ]
       ]
     },
-    "Microsoft OneDrive": {
-      "main": [
-        [
-          {
-            "node": "Microsoft OneDrive1",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Microsoft OneDrive1": {
+    "Send to Dashboard": {
       "main": [
         []
       ]
